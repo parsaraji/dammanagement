@@ -1,34 +1,99 @@
 {% extends "base.html" %}
 
-{% block title %}پرونده کامل دام {{ animal.plastic_tag }}{% endblock %}
+{% block title %}پرونده کامل و تایم‌لاین — دام {{ animal.plastic_tag }}{% endblock %}
 
 {% block content %}
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="m-0 fw-bold"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> پرونده کامل و تایم‌لاین سوابق دام {{ animal.plastic_tag }}</h5>
-        <a href="{{ url_for('animals.detail', id=animal.id) }}" class="btn btn-outline-secondary">بازگشت به خلاصه پرونده</a>
+<style>
+.timeline-spine {
+    position: relative;
+    padding-right: 30px;
+}
+.timeline-spine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 12px;
+    width: 3px;
+    background: #e9ecef;
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+.timeline-icon {
+    position: absolute;
+    right: -30px;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+    color: #fff;
+    font-size: 12px;
+    z-index: 2;
+}
+</style>
+
+<div class="container py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold m-0"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i> تایم‌لاین سوابق کامل دام {{ animal.plastic_tag }}</h4>
+        <a href="{{ url_for('animals.detail', id=animal.id) }}" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-right me-1"></i> بازگشت به پرونده
+        </a>
     </div>
-    <div class="card-body">
-        <div class="timeline position-relative ps-4 border-start border-3 border-primary">
-            {% for item in timeline %}
-            <div class="mb-4 position-relative">
-                <div class="bg-primary text-white rounded-circle position-absolute text-center" style="width: 24px; height: 24px; left: -38px; top: 0; line-height: 24px; font-size: 11px;">
-                    <i class="fa-solid fa-check"></i>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-3">
+            <form method="GET" class="row g-2 align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label fs-8">از تاریخ</label>
+                    <input type="text" name="start_date" class="form-control form-control-sm pdate" value="{{ request.args.get('start_date', '') }}">
                 </div>
-                <div class="card shadow-none border">
-                    <div class="card-header bg-light py-2 d-flex justify-content-between">
-                        <span class="fw-bold text-primary">{{ item.title }}</span>
-                        <span class="badge bg-secondary">{{ item.date|jalali }}</span>
+                <div class="col-md-3">
+                    <label class="form-label fs-8">تا تاریخ</label>
+                    <input type="text" name="end_date" class="form-control form-control-sm pdate" value="{{ request.args.get('end_date', '') }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fs-8">نوع عملیات</label>
+                    <select name="type" class="form-select form-select-sm">
+                        <option value="">همه عملیات</option>
+                        <option value="insemination">تلقیح</option>
+                        <option value="calving">زایش</option>
+                        <option value="vaccination">واکسیناسیون</option>
+                        <option value="treatment">درمان / ویزیت</option>
+                        <option value="measurement">اندازه‌گیری</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">فیلتر</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="timeline-spine">
+        {% for event in events %}
+        <div class="timeline-item">
+            <div class="timeline-icon bg-{{ event.color or 'primary' }}">
+                <i class="fa-solid {{ event.icon or 'fa-circle' }}"></i>
+            </div>
+            <div class="card shadow-sm border-0 border-start border-4 border-{{ event.color or 'primary' }}">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-{{ event.color or 'primary' }}">{{ event.title }}</span>
+                        <span class="badge bg-light text-dark border">{{ event.date|jalali }}</span>
                     </div>
-                    <div class="card-body py-2 fs-7">
-                        {{ item.details }}
+                    <div class="fs-7 text-secondary">
+                        {{ event.details }}
                     </div>
                 </div>
             </div>
-            {% else %}
-            <p class="text-muted">هیچ سابقه عملیاتی ثبت نشده است.</p>
-            {% endfor %}
         </div>
+        {% else %}
+        <div class="text-center text-muted py-5">هیچ رکوردی در این بازه ثبت نشده است.</div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

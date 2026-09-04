@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Preserve active tab across page reloads using URL hash or localStorage
+    var activeTab = localStorage.getItem('activeTab');
+    if (activeTab && window.switchTab) {
+        window.switchTab(activeTab);
+    }
+
     // Initialize Persian Datepicker on elements with class .pdate
     if ($.fn.pDatepicker) {
         $('.pdate').pDatepicker({
@@ -38,10 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     if (response.redirect) {
                         window.location.href = response.redirect;
-                    } else if (response.reload) {
-                        window.location.reload();
                     } else if (response.open_newborn_modal) {
-                        // Handle auto-opening newborn form after calving
                         if (window.triggerNewbornModal) {
                             window.triggerNewbornModal(response.newborn_data);
                         } else {

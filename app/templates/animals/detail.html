@@ -85,33 +85,58 @@
         <!-- Tab 2: Pedigree Tree -->
         <div id="tab-pedigree" class="tab-content-panel d-none">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
+                <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <span><i class="fa-solid fa-sitemap text-primary me-2"></i> درخت شجره و ضریب همخونی</span>
-                    <span class="badge bg-primary fs-6">خلوص خونی: {{ blood_purity }}% | ضریب همخونی F: {{ inbreeding_coeff }}</span>
+                    <div>
+                        <span class="badge bg-success fs-6 me-2">خلوص خونی: {{ blood_purity }}%</span>
+                        <span class="badge bg-primary fs-6">ضریب همخونی Wright (F): {{ inbreeding_coeff }}</span>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted fs-7">نمایش تا ۴ نسل قبل:</p>
-                    <div class="p-3 bg-light rounded border">
-                        {% macro render_tree_node(node) %}
-                        {% if node %}
-                        <div class="p-2 my-1 border rounded bg-white shadow-sm">
-                            <span class="fw-bold text-primary">{{ node.tag }}</span> ({{ node.breed or '---' }})
-                            {% if node.father or node.mother %}
-                            <div class="ms-4 mt-2 border-start ps-3">
-                                <div class="text-muted fs-7"><i class="fa-solid fa-mars me-1"></i> پدر:</div>
-                                {{ render_tree_node(node.father) }}
-                                <div class="text-muted fs-7 mt-1"><i class="fa-solid fa-venus me-1"></i> مادر:</div>
-                                {{ render_tree_node(node.mother) }}
-                            </div>
-                            {% endif %}
-                        </div>
-                        {% else %}
-                        <span class="text-muted fs-7">نامشخص (ناموجود)</span>
-                        {% endif %}
-                        {% endmacro %}
+                    <style>
+                        .tree-node-card {
+                            border: 1px solid #dee2e6;
+                            border-radius: 8px;
+                            padding: 8px 12px;
+                            background: #fff;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+                        }
+                        .tree-branch {
+                            position: relative;
+                            margin-right: 20px;
+                            padding-right: 15px;
+                            border-right: 2px solid #0d6efd;
+                        }
+                    </style>
 
-                        {{ render_tree_node(pedigree_tree) }}
+                    {% macro render_tree_node(node, depth=0) %}
+                    {% if node %}
+                    <div class="tree-node-card my-2">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <i class="fa-solid {{ 'fa-mars text-primary' if node.sex == 'male' else 'fa-venus text-danger' }} me-2"></i>
+                                <a href="/animals/{{ node.id }}" class="fw-bold text-decoration-none">{{ node.tag }}</a>
+                                <span class="text-muted fs-8">({{ node.breed or '---' }})</span>
+                            </div>
+                            <span class="badge bg-light text-dark border fs-8">{{ 'گوسفند' if node.species == 'sheep' else 'بز' }}</span>
+                        </div>
+
+                        {% if node.father or node.mother %}
+                        <div class="tree-branch mt-2">
+                            <div class="text-muted fs-8 fw-bold text-primary mb-1"><i class="fa-solid fa-mars me-1"></i> پدر (خط نر):</div>
+                            {{ render_tree_node(node.father, depth + 1) }}
+
+                            <div class="text-muted fs-8 fw-bold text-danger mt-2 mb-1"><i class="fa-solid fa-venus me-1"></i> مادر (خط مادی):</div>
+                            {{ render_tree_node(node.mother, depth + 1) }}
+                        </div>
+                        {% endif %}
                     </div>
+                    {% else %}
+                    <div class="text-muted fs-8 p-1">--- ناپیدا / ثبت نشده ---</div>
+                    {% endif %}
+                    {% endmacro %}
+
+                    {{ render_tree_node(pedigree_tree) }}
                 </div>
             </div>
         </div>
@@ -681,11 +706,23 @@ function switchTab(tabName) {
     $('.list-group-item').removeClass('active');
     $('#tab-' + tabName).removeClass('d-none');
     $('#tab-' + tabName + '-btn').addClass('active');
+    localStorage.setItem('activeTab', tabName);
 }
 
 window.triggerNewbornModal = function(data) {
-    alert('زایش با موفقیت ثبت شد. لطفاً فرم ثبت بره/بزغاله تازه متولد شده را تکمیل کنید.');
-    $('#addAnimalModal').modal('show');
+    if ($('#addAnimalModal').length) {
+        $('#addAnimalModal input[name="mother_id"]').val(data.mother_id);
+        $('#addAnimalModal select[name="species"]').val(data.species);
+        $('#addAnimalModal input[name="birth_date"]').val(data.birth_date);
+        if (data.suggested_tag) $('#addAnimalModal input[name="plastic_tag"]').val(data.suggested_tag);
+        if (data.suggested_serial) $('#addAnimalModal input[name="serial_number"]').val(data.suggested_serial);
+        if (data.current_pen_id) $('#addAnimalModal select[name="current_pen_id"]').val(data.current_pen_id);
+        if (data.calving_id) $('#addAnimalModal input[name="calving_id"]').val(data.calving_id);
+        $('#addAnimalModal').modal('show');
+    } else {
+        alert('زایش با موفقیت ثبت شد. متولدین جدید در لیست اصلی دام‌ها قابل مشاهده خواهند بود.');
+        window.location.reload();
+    }
 };
 </script>
 {% endblock %}

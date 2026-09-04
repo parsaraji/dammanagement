@@ -213,6 +213,12 @@ def calving_new(animal_id):
     db.session.commit()
 
     if calv_type_str != 'abortion' and offspring_cnt > 0:
+        # Generate auto-suggested tags for newborns
+        import random
+        suggested_tag = f"IR-NEW-{random.randint(1000, 9999)}"
+        suggested_serial = f"SR-{random.randint(10000, 99999)}"
+        pen_id = animal.current_pen_id or (animal.current_pen.id if animal.current_pen else 0)
+
         return jsonify({
             'success': True,
             'message': 'زایش ثبت شد. لطفاً مشخصات بره/بزغاله متولد شده را ثبت کنید.',
@@ -221,6 +227,10 @@ def calving_new(animal_id):
                 'mother_id': animal.id,
                 'species': animal.species.value if hasattr(animal.species, 'value') else animal.species,
                 'birth_date': request.form.get('date'),
+                'current_pen_id': pen_id,
+                'suggested_tag': suggested_tag,
+                'suggested_serial': suggested_serial,
+                'calving_id': calv.id,
                 'count': offspring_cnt
             }
         })

@@ -1,36 +1,15 @@
-import pypdf
-import io
 from app.models.animal import Animal
-from app.services.pdf_service import generate_animal_id_card, generate_pdf_report, fa_pdf
 
-def test_fa_pdf_shaping():
-    reshaped = fa_pdf("مدیریت و اطلاعات دامداری")
-    assert reshaped is not None
-    assert len(reshaped) > 0
+def test_id_card_printable_route(auth_client):
+    animal = Animal.query.first()
+    assert animal is not None
 
-def test_pdf_id_card_generation(app):
-    with app.app_context():
-        animal = Animal.query.filter_by(plastic_tag='IR-G0-F1').first()
-        assert animal is not None
+    res = auth_client.get(f'/animals/{animal.id}/id-card')
+    assert res.status_code == 200
+    assert 'شناسنامه و کارت هویت دام'.encode('utf-8') in res.data
+    assert animal.plastic_tag.encode('utf-8') in res.data
 
-        pdf_bytes = generate_animal_id_card(animal)
-        assert pdf_bytes is not None
-        assert len(pdf_bytes) > 1000
-
-        # Verify PDF can be read by PyPDF
-        reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
-        assert len(reader.pages) >= 1
-
-def test_pdf_report_generation(app):
-    with app.app_context():
-        headers = ["نام دام", "شماره پلاک", "جنسیت", "تاریخ تولد", "وضعیت"]
-        rows = [
-            ["گوسفند ۱", "12345", "ماده", "1402/01/01", "زنده"],
-            ["بز ۲", "67890", "نر", "1401/05/10", "زنده"]
-        ]
-        pdf_bytes = generate_pdf_report("گزارش آزمایشی دام‌ها", headers, rows)
-        assert pdf_bytes is not None
-        assert len(pdf_bytes) > 1000
-
-        reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
-        assert len(reader.pages) == 1
+def test_printable_reports_route(auth_client):
+    res = auth_client.get('/reports/calving?format=pdf')
+    assert res.status_code == 200
+    assert 'گزارش زایش‌ها'.encode('utf-8') in res.data

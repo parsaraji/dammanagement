@@ -45,3 +45,43 @@ def from_jalali(j_str: str) -> date:
         return j_date.togregorian()
     except Exception as e:
         raise ValueError(f"تاریخ شمسی نامعتبر: {e}")
+
+PERSIAN_ENUM_MAP = {
+    'male': 'نر',
+    'female': 'ماده',
+    'sheep': 'گوسفند',
+    'goat': 'بز',
+    'born_in_farm': 'متولد مزرعه',
+    'purchased': 'خریداری شده',
+    'alive': 'زنده',
+    'ready_for_removal': 'آماده حذف',
+    'removed': 'حذف شده',
+    'artificial': 'مصنوعی',
+    'natural': 'طبیعی',
+    'normal': 'طبیعی',
+    'difficult': 'سخت‌زایی',
+    'abortion': 'سقط جنین',
+    'stillbirth': 'مرده‌زایی',
+    'medical': 'عمومی/پزشکی',
+    'reproductive': 'تولیدمثلی',
+    'weight': 'وزن‌کشی',
+    'body_temperature': 'دمای بدن',
+    'body_length': 'طول بدن',
+    'chest_girth': 'دور سینه',
+    'withers_height': 'ارتفاع جدگاه',
+    'front_left': 'جلو چپ',
+    'front_right': 'جلو راست',
+    'rear_left': 'عقب چپ',
+    'rear_right': 'عقب راست',
+    'healthy': 'سالم',
+    'long': 'بلند',
+    'problem': 'دارای عارضه',
+    'in': 'ورود',
+    'out': 'خروج'
+}
+
+def fa_enum(val) -> str:
+    if val is None:
+        return '---'
+    s = str(val.value if hasattr(val, 'value') else val).lower().strip()
+    return PERSIAN_ENUM_MAP.get(s, s)

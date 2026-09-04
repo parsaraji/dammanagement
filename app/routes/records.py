@@ -28,7 +28,7 @@ def full_record(id):
 
     timeline.sort(key=lambda x: x['date'], reverse=True)
 
-    return render_template('records/full.html', animal=animal, timeline=timeline)
+    return render_template('records/full.html', animal=animal, events=timeline)
 
 @bp.route('/animals/<int:id>/record/summary')
 @login_required

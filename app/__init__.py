@@ -25,10 +25,14 @@ def create_app(config_class=Config):
         return User.query.get(int(user_id))
 
     # Register Jinja context processors and filters
-    from app.services.jalali import to_jalali
+    from app.services.jalali import to_jalali, fa_enum
     @app.template_filter('jalali')
     def jalali_filter(value, fmt='%Y/%m/%d'):
         return to_jalali(value, fmt)
+
+    @app.template_filter('fa_enum')
+    def fa_enum_filter(value):
+        return fa_enum(value)
 
     # Register Blueprints
     from app.routes.auth import bp as auth_bp

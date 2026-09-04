@@ -10,7 +10,7 @@ from app.models.measurement import Measurement
 from app.models.milk import MilkRecord
 from app.forms.animal import AnimalForm, QuickRemovalForm, FullRemovalForm
 from app.services.jalali import normalize_digits, from_jalali, to_jalali
-from app.services.pdf_service import generate_animal_id_card
+from app.services.pdf_service import generate_qr_code_base64
 from app.services.pedigree_service import calculate_inbreeding_coefficient, calculate_blood_purity, build_tree_node
 
 bp = Blueprint('animals', __name__)
@@ -54,6 +54,22 @@ def new():
         mother_id = form.mother_id.data if form.mother_id.data != 0 else None
         father_id = form.father_id.data if form.father_id.data != 0 else None
         father_sperm_id = form.father_sperm_id.data if form.father_sperm_id.data != 0 else None
+
+        species_enum = Species[form.species.data.upper()]
+
+        if mother_id:
+            m_obj = db.session.get(Animal, mother_id)
+            if not m_obj or m_obj.sex != Sex.FEMALE:
+                return jsonify({'success': False, 'message': 'مادر انتخاب شده باید دام ماده باشد.'})
+            if m_obj.species != species_enum:
+                return jsonify({'success': False, 'message': 'گونه مادر و فرزند مطابقت ندارد.'})
+
+        if father_id:
+            f_obj = db.session.get(Animal, father_id)
+            if not f_obj or f_obj.sex != Sex.MALE:
+                return jsonify({'success': False, 'message': 'پدر انتخاب شده باید دام نر باشد.'})
+            if f_obj.species != species_enum:
+                return jsonify({'success': False, 'message': 'گونه پدر و فرزند مطابقت ندارد.'})
 
         animal = Animal(
             plastic_tag=plastic_tag,
@@ -165,12 +181,15 @@ def female_status():
 
     return render_template('animals/female_status.html', females=female_data)
 
+@bp.route('/animals/<int:id>/id-card')
+@login_required
+def id_card(id):
+    animal = Animal.query.get_or_404(id)
+    qr_b64 = generate_qr_code_base64(animal.plastic_tag)
+    current_date_jalali = to_jalali(request.args.get('date') or None) or '1402/08/15'
+    return render_template('animals/id_card.html', animal=animal, qr_b64=qr_b64, current_date_jalali=current_date_jalali)
+
 @bp.route('/animals/<int:id>/id-card.pdf')
 @login_required
 def id_card_pdf(id):
-    animal = Animal.query.get_or_404(id)
-    pdf_bytes = generate_animal_id_card(animal)
-    response = make_response(pdf_bytes)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename=id_card_{animal.plastic_tag}.pdf'
-    return response
+    return redirect(url_for('animals.id_card', id=id))

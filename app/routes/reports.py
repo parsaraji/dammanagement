@@ -48,12 +48,8 @@ def calving_report():
             str(c.offspring_count)
         ])
 
-    if fmt == 'pdf':
-        pdf_bytes = generate_pdf_report("گزارش زایش‌ها", headers, rows)
-        resp = make_response(pdf_bytes)
-        resp.headers['Content-Type'] = 'application/pdf'
-        resp.headers['Content-Disposition'] = 'inline; filename=calving_report.pdf'
-        return resp
+    if fmt == 'pdf' or fmt == 'print':
+        return render_template('reports/printable_report.html', title="گزارش زایش‌ها", headers=headers, rows=rows, current_date_jalali=to_jalali(request.args.get('date') or None) or '1402/08/15')
     else:
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -82,12 +78,8 @@ def insemination_report():
             'بله' if i.led_to_pregnancy else 'خیر'
         ])
 
-    if fmt == 'pdf':
-        pdf_bytes = generate_pdf_report("گزارش تلقیح و آبستنی", headers, rows)
-        resp = make_response(pdf_bytes)
-        resp.headers['Content-Type'] = 'application/pdf'
-        resp.headers['Content-Disposition'] = 'inline; filename=insemination_report.pdf'
-        return resp
+    if fmt == 'pdf' or fmt == 'print':
+        return render_template('reports/printable_report.html', title="گزارش تلقیح و آبستنی", headers=headers, rows=rows, current_date_jalali=to_jalali(request.args.get('date') or None) or '1402/08/15')
     else:
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -117,12 +109,8 @@ def milk_report():
             str(mr.total_amount or 0)
         ])
 
-    if fmt == 'pdf':
-        pdf_bytes = generate_pdf_report("گزارش تولید شیر", headers, rows)
-        resp = make_response(pdf_bytes)
-        resp.headers['Content-Type'] = 'application/pdf'
-        resp.headers['Content-Disposition'] = 'inline; filename=milk_report.pdf'
-        return resp
+    if fmt == 'pdf' or fmt == 'print':
+        return render_template('reports/printable_report.html', title="گزارش تولید شیر", headers=headers, rows=rows, current_date_jalali=to_jalali(request.args.get('date') or None) or '1402/08/15')
     else:
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -151,12 +139,8 @@ def removals_report():
             a.removal_buyer_name or '---'
         ])
 
-    if fmt == 'pdf':
-        pdf_bytes = generate_pdf_report("گزارش حذف و خروج دام", headers, rows)
-        resp = make_response(pdf_bytes)
-        resp.headers['Content-Type'] = 'application/pdf'
-        resp.headers['Content-Disposition'] = 'inline; filename=removals_report.pdf'
-        return resp
+    if fmt == 'pdf' or fmt == 'print':
+        return render_template('reports/printable_report.html', title="گزارش حذف و خروج دام", headers=headers, rows=rows, current_date_jalali=to_jalali(request.args.get('date') or None) or '1402/08/15')
     else:
         wb = openpyxl.Workbook()
         ws = wb.active
