@@ -1,0 +1,16 @@
+{% macro render_datatable(table_id, order_col=0, order_dir='asc') %}
+<script>
+$(document).ready(function() {
+    $('#{{ table_id }}').DataTable({
+        "language": {
+            "url": "{{ url_for('static', filename='i18n/datatables-fa.json') }}"
+        },
+        "order": [[ {{ order_col }}, "{{ order_dir }}" ]],
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "همه"]],
+        "responsive": true,
+        "autoWidth": false
+    });
+});
+</script>
+{% endmacro %}

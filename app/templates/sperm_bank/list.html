@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% import "partials/_datatable.html" as dt %}
+
+{% block title %}بانک اسپرم{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="m-0 fw-bold"><i class="fa-solid fa-vial text-primary me-2"></i> فهرست و موجودی بانک اسپرم</h5>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSpermModal">+ ثبت اسپرم جدید</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="spermTable" class="table table-hover table-bordered">
+                        <thead class="table-light">
+                            <tr><th>کد</th><th>نام / عنوان</th><th>نژاد</th><th>تعیین جنسیت</th><th>موجودی (پایِت)</th><th>عملیات</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for s in sperms %}
+                            <tr>
+                                <td><strong>{{ s.code }}</strong></td>
+                                <td>{{ s.name }}</td>
+                                <td>{{ s.breed or '---' }}</td>
+                                <td>{{ 'بله (Sexed)' if s.is_sexed else 'خیر' }}</td>
+                                <td><span class="badge bg-success fs-6">{{ s.stock_qty }}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#txModal{{ s.id }}">ثبت ورود/خروج</button>
+                                </td>
+                            </tr>
+
+                            <!-- Transaction Modal -->
+                            <div class="modal fade" id="txModal{{ s.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-primary text-white"><h5 class="modal-title">ثبت تراکنش اسپرم {{ s.code }}</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                                        <form method="POST" action="{{ url_for('sperm_bank.transaction', id=s.id) }}">
+                                            <div class="modal-body">
+                                                <div class="mb-3"><label class="form-label">نوع تراکنش</label><select name="transaction_type" class="form-select"><option value="in">ورود به انبار</option><option value="out">خروج از انبار</option></select></div>
+                                                <div class="mb-3"><label class="form-label">تاریخ</label><input type="text" name="date" class="form-control pdate" required></div>
+                                                <div class="mb-3"><label class="form-label">تعداد (پایِت)</label><input type="number" name="quantity" class="form-control" required min="1"></div>
+                                                <div class="mb-3"><label class="form-label">توضیحات / شماره برگه</label><input type="text" name="description" class="form-control"></div>
+                                            </div>
+                                            <div class="modal-footer"><button type="submit" class="btn btn-primary">ثبت تراکنش</button></div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 fw-bold"><i class="fa-solid fa-history text-secondary me-2"></i> سابقه تراکنش‌های اخیر اسپرم</div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush fs-7">
+                    {% for tx in recent_transactions %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ tx.sperm.code }}</strong> - {{ tx.description or 'تراکنش' }}
+                            <div class="text-muted fs-8">{{ tx.date|jalali }}</div>
+                        </div>
+                        <span class="badge bg-{{ 'success' if (tx.transaction_type.name == 'IN' or tx.transaction_type == 'in') else 'danger' }}">
+                            {{ '+' if (tx.transaction_type.name == 'IN' or tx.transaction_type == 'in') else '-' }}{{ tx.quantity }}
+                        </span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted text-center">تراکنشی یافت نشد.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Sperm Modal -->
+<div class="modal fade" id="addSpermModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white"><h5 class="modal-title">افزودن اسپرم جدید</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('sperm_bank.new') }}">
+                {{ form.hidden_tag() }}
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">عنوان / نام اسپرم *</label>{{ form.name(class="form-control") }}</div>
+                    <div class="mb-3"><label class="form-label">کد اسپرم *</label>{{ form.code(class="form-control") }}</div>
+                    <div class="mb-3"><label class="form-label">نژاد</label>{{ form.breed(class="form-select") }}</div>
+                    <div class="mb-3 form-check">{{ form.is_sexed(class="form-check-input") }}<label class="form-check-label">{{ form.is_sexed.label.text }}</label></div>
+                </div>
+                <div class="modal-footer">{{ form.submit(class="btn btn-primary") }}</div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{ dt.render_datatable('spermTable') }}
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}پرونده کامل دام {{ animal.plastic_tag }}{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="m-0 fw-bold"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> پرونده کامل و تایم‌لاین سوابق دام {{ animal.plastic_tag }}</h5>
+        <a href="{{ url_for('animals.detail', id=animal.id) }}" class="btn btn-outline-secondary">بازگشت به خلاصه پرونده</a>
+    </div>
+    <div class="card-body">
+        <div class="timeline position-relative ps-4 border-start border-3 border-primary">
+            {% for item in timeline %}
+            <div class="mb-4 position-relative">
+                <div class="bg-primary text-white rounded-circle position-absolute text-center" style="width: 24px; height: 24px; left: -38px; top: 0; line-height: 24px; font-size: 11px;">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <div class="card shadow-none border">
+                    <div class="card-header bg-light py-2 d-flex justify-content-between">
+                        <span class="fw-bold text-primary">{{ item.title }}</span>
+                        <span class="badge bg-secondary">{{ item.date|jalali }}</span>
+                    </div>
+                    <div class="card-body py-2 fs-7">
+                        {{ item.details }}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-muted">هیچ سابقه عملیاتی ثبت نشده است.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

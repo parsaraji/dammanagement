@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}خطای سرور{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1 text-danger">500</h1>
+    <h3 class="mb-3">خطایی در سرور رخ داده است!</h3>
+    <p class="text-secondary">متأسفانه هنگام پردازش درخواست شما خطایی رخ داد. لطفاً مجدداً تلاش کنید.</p>
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary mt-3">بازگشت به داشبورد</a>
+</div>
+{% endblock %}

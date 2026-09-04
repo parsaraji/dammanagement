@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}پرونده دام {{ animal.plastic_tag }}{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+    <!-- Header Summary Card -->
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white p-3 rounded-3 me-3 text-center" style="min-width: 80px;">
+                        <i class="fa-solid fa-paw fa-2x"></i>
+                        <div class="fw-bold fs-7 mt-1">{{ 'گوسفند' if (animal.species.name == 'SHEEP' or animal.species == 'sheep') else 'بز' }}</div>
+                    </div>
+                    <div>
+                        <h4 class="m-0 fw-bold">شماره پلاستیکی: <span class="text-primary">{{ animal.plastic_tag }}</span></h4>
+                        <div class="text-muted fs-7 mt-1">
+                            شماره سریال: <strong>{{ animal.serial_number }}</strong> |
+                            جنسیت: <strong>{{ 'ماده' if (animal.sex.name == 'FEMALE' or animal.sex == 'female') else 'نر' }}</strong> |
+                            نژاد: <strong>{{ animal.breed or '---' }}</strong> |
+                            بهاربند: <strong>{{ animal.current_pen.name if animal.current_pen else '---' }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <a href="{{ url_for('animals.id_card_pdf', id=animal.id) }}" target="_blank" class="btn btn-outline-info me-2">
+                        <i class="fa-solid fa-id-card me-1"></i> کارت هویت (PDF)
+                    </a>
+                    <a href="{{ url_for('animals.list') }}" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-arrow-left me-1"></i> بازگشت به لیست
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right-Hand Workspace Menu & Tab Contents -->
+    <div class="col-md-3">
+        <div class="list-group shadow-sm border-0 sticky-top" style="top: 20px;">
+            <button type="button" class="list-group-item list-group-item-action active fw-bold" id="tab-info-btn" onclick="switchTab('info')">
+                <i class="fa-solid fa-circle-info me-2"></i> مشخصات اصلی
+            </button>
+            <button type="button" class="list-group-item list-group-item-action fw-bold" id="tab-pedigree-btn" onclick="switchTab('pedigree')">
+                <i class="fa-solid fa-sitemap me-2"></i> شجره و همخونی
+            </button>
+            <button type="button" class="list-group-item list-group-item-action fw-bold" id="tab-repro-btn" onclick="switchTab('repro')">
+                <i class="fa-solid fa-heart-pulse me-2"></i> پزشکی و تولیدمثل
+            </button>
+            <button type="button" class="list-group-item list-group-item-action fw-bold" id="tab-other-btn" onclick="switchTab('other')">
+                <i class="fa-solid fa-ruler-combined me-2"></i> دیگر عملیات
+            </button>
+            <button type="button" class="list-group-item list-group-item-action fw-bold" id="tab-milk-btn" onclick="switchTab('milk')">
+                <i class="fa-solid fa-bottle-water me-2"></i> رکورد شیر و نماد
+            </button>
+            <a href="{{ url_for('records.full_record', id=animal.id) }}" class="list-group-item list-group-item-action fw-bold text-primary">
+                <i class="fa-solid fa-clock-rotate-left me-2"></i> پرونده کامل (تایم‌لاین)
+            </a>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <!-- Tab 1: General Info -->
+        <div id="tab-info" class="tab-content-panel">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold py-3">مشخصات کامل شناسنامه‌ای</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4"><strong>شماره پلاستیکی:</strong> {{ animal.plastic_tag }}</div>
+                        <div class="col-md-4"><strong>شماره سریال:</strong> {{ animal.serial_number }}</div>
+                        <div class="col-md-4"><strong>شناسه ملی:</strong> {{ animal.national_id or '---' }}</div>
+                        <div class="col-md-4"><strong>گوش فلزی:</strong> {{ animal.metal_tag or '---' }}</div>
+                        <div class="col-md-4"><strong>تاریخ تولد:</strong> {{ animal.birth_date|jalali }}</div>
+                        <div class="col-md-4"><strong>شکم / تکرار بدن:</strong> {{ animal.parity }}</div>
+                        <div class="col-md-4"><strong>منشأ:</strong> {{ 'متولد مزرعه' if (animal.origin.name == 'BORN_IN_FARM' or animal.origin == 'born_in_farm') else 'خریداری شده' }}</div>
+                        <div class="col-md-4"><strong>مادر:</strong> {{ animal.mother.plastic_tag if animal.mother else '---' }}</div>
+                        <div class="col-md-4"><strong>پدر:</strong> {{ animal.father.plastic_tag if animal.father else '---' }}</div>
+                        <div class="col-md-4"><strong>وزن تولد:</strong> {{ animal.birth_weight or '---' }} کیلوگرم</div>
+                        <div class="col-md-4"><strong>توضیحات:</strong> {{ animal.notes or '---' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Pedigree Tree -->
+        <div id="tab-pedigree" class="tab-content-panel d-none">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-sitemap text-primary me-2"></i> درخت شجره و ضریب همخونی</span>
+                    <span class="badge bg-primary fs-6">خلوص خونی: {{ blood_purity }}% | ضریب همخونی F: {{ inbreeding_coeff }}</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted fs-7">نمایش تا ۴ نسل قبل:</p>
+                    <div class="p-3 bg-light rounded border">
+                        {% macro render_tree_node(node) %}
+                        {% if node %}
+                        <div class="p-2 my-1 border rounded bg-white shadow-sm">
+                            <span class="fw-bold text-primary">{{ node.tag }}</span> ({{ node.breed or '---' }})
+                            {% if node.father or node.mother %}
+                            <div class="ms-4 mt-2 border-start ps-3">
+                                <div class="text-muted fs-7"><i class="fa-solid fa-mars me-1"></i> پدر:</div>
+                                {{ render_tree_node(node.father) }}
+                                <div class="text-muted fs-7 mt-1"><i class="fa-solid fa-venus me-1"></i> مادر:</div>
+                                {{ render_tree_node(node.mother) }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <span class="text-muted fs-7">نامشخص (ناموجود)</span>
+                        {% endif %}
+                        {% endmacro %}
+
+                        {{ render_tree_node(pedigree_tree) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Medical & Reproduction -->
+        <div id="tab-repro" class="tab-content-panel d-none">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-heart-pulse text-danger me-2"></i> سوابق پزشکی و تولیدمثلی</span>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#insemModal">+ تلقیح</button>
+                        <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#cidrModal">+ سیدر</button>
+                        <button class="btn btn-sm btn-outline-warning text-dark" data-bs-toggle="modal" data-bs-target="#dryModal">+ خشکی</button>
+                        <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#calvingModal">+ زایش</button>
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#vacModal">+ واکسن</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6>آخرین تلقیح‌ها</h6>
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr><th>تاریخ</th><th>نوع</th><th>اسپرم/پدر</th><th>آبستنی</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for i in animal.inseminations.order_by(Insemination.date.desc()).all() %}
+                            <tr>
+                                <td>{{ i.date|jalali }}</td>
+                                <td>{{ 'مصنوعی' if (i.insemination_type.name == 'ARTIFICIAL' or i.insemination_type == 'artificial') else 'طبیعی' }}</td>
+                                <td>{{ i.sperm.code if i.sperm else (i.sire_animal.plastic_tag if i.sire_animal else '---') }}</td>
+                                <td>{{ 'بله' if i.led_to_pregnancy else 'خیر' }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">داده‌ای ثبت نشده است</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Other Operations -->
+        <div id="tab-other" class="tab-content-panel d-none">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-ruler-combined me-2"></i> اندازهگیری، سم‌چینی و اسکور بدنی</span>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#measModal">+ ثبت وزن/اندازه‌گیری</button>
+                </div>
+                <div class="card-body">
+                    <h6>سوابق وزن و اندازه‌گیری</h6>
+                    <table class="table table-sm table-bordered">
+                        <thead><tr><th>تاریخ</th><th>نوع</th><th>مقدار</th></tr></thead>
+                        <tbody>
+                            {% for m in animal.measurements.order_by(Measurement.date.desc()).all() %}
+                            <tr><td>{{ m.date|jalali }}</td><td>{{ m.measurement_type.value }}</td><td>{{ m.value }} {{ m.unit or '' }}</td></tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-muted">داده‌ای برای نمایش وجود ندارد</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: Milk Records -->
+        <div id="tab-milk" class="tab-content-panel d-none">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-bottle-water text-primary me-2"></i> رکوردهای شیر و استانداردسازی</span>
+                    <a href="{{ url_for('milk.standardize', animal_id=animal.id) }}" class="btn btn-sm btn-outline-success">
+                        <i class="fa-solid fa-calculator me-1"></i> استانداردسازی و نمودار
+                    </a>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-bordered">
+                        <thead><tr><th>تاریخ</th><th>نوبت ۱</th><th>نوبت ۲</th><th>نوبت ۳</th><th>مجموع (kg)</th></tr></thead>
+                        <tbody>
+                            {% for mr in animal.milk_records.order_by(MilkRecord.date.desc()).all() %}
+                            <tr>
+                                <td>{{ mr.date|jalali }}</td>
+                                <td>{{ mr.milking1_amount }}</td>
+                                <td>{{ mr.milking2_amount }}</td>
+                                <td>{{ mr.milking3_amount }}</td>
+                                <td class="fw-bold">{{ mr.total_amount }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center text-muted">داده‌ای ثبت نشده است</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Partials for Insemination, CIDR, DryOff, Calving, Vaccination, Measurement -->
+<div class="modal fade" id="insemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white"><h5 class="modal-title">ثبت تلقیح جدید</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('reproduction.insemination_new', animal_id=animal.id) }}" data-ajax="true">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ تلقیح</label><input type="text" name="date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">نوع تلقیح</label><select name="insemination_type" class="form-select"><option value="artificial">مصنوعی</option><option value="natural">طبیعی</option></select></div>
+                    <div class="mb-3"><label class="form-label">کد اسپرم (در صورت تلقیح مصنوعی)</label><select name="sperm_id" class="form-select"><option value="">انتخاب...</option>{% for s in sperms %}<option value="{{ s.id }}">{{ s.code }} - {{ s.name }}</option>{% endfor %}</select></div>
+                    <div class="mb-3 form-check"><input type="checkbox" name="led_to_pregnancy" value="y" class="form-check-input" id="pregCheck"><label class="form-check-label" for="pregCheck">منجر به آبستنی شد</label></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">ثبت تلقیح</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="calvingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white"><h5 class="modal-title">ثبت زایش</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('reproduction.calving_new', animal_id=animal.id) }}" data-ajax="true">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ زایش</label><input type="text" name="date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">نوع زایش</label><select name="calving_type" class="form-select"><option value="normal">طبیعی</option><option value="difficult">سخت‌زایی</option><option value="abortion">سقط جنین</option><option value="stillbirth">مرده‌زایی</option></select></div>
+                    <div class="mb-3"><label class="form-label">تعداد فرزند (بره/بزغاله)</label><input type="number" name="offspring_count" value="1" min="1" max="4" class="form-control"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-success">ثبت زایش</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function switchTab(tabName) {
+    $('.tab-content-panel').addClass('d-none');
+    $('.list-group-item').removeClass('active');
+    $('#tab-' + tabName).removeClass('d-none');
+    $('#tab-' + tabName + '-btn').addClass('active');
+}
+
+window.triggerNewbornModal = function(data) {
+    alert('زایش با موفقیت ثبت شد. لطفاً فرم ثبت بره/بزغاله تازه متولد شده را تکمیل کنید.');
+    $('#addAnimalModal').modal('show');
+};
+</script>
+{% endblock %}

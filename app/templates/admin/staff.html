@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}پرسنل و دامپزشکان{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 fw-bold"><i class="fa-solid fa-user-plus text-primary me-2"></i> ثبت پرسنل جدید</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.staff') }}">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3"><label class="form-label">نام و نام خانوادگی *</label>{{ form.full_name(class="form-control") }}</div>
+                    <div class="mb-3"><label class="form-label">سمت / مسئولیت</label>{{ form.role(class="form-control") }}</div>
+                    <div class="mb-3"><label class="form-label">شماره تماس</label>{{ form.phone(class="form-control") }}</div>
+                    <div class="mb-3 form-check">{{ form.is_active(class="form-check-input") }}<label class="form-check-label">فعال</label></div>
+                    {{ form.submit(class="btn btn-primary w-100") }}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 fw-bold"><i class="fa-solid fa-users text-primary me-2"></i> لیست پرسنل و کارشناسان</div>
+            <div class="card-body">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light"><tr><th>نام و نام خانوادگی</th><th>سمت</th><th>شماره تماس</th><th>وضعیت</th></tr></thead>
+                    <tbody>
+                        {% for st in staff_members %}
+                        <tr>
+                            <td><strong>{{ st.full_name }}</strong></td>
+                            <td>{{ st.role or '---' }}</td>
+                            <td>{{ st.phone or '---' }}</td>
+                            <td>{{ 'فعال' if st.is_active else 'غیرفعال' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted">پرونده پرسنلی ثبت نشده است.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

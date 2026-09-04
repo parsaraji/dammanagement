@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}عملیات جمعی و سریع{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3">
+        <h5 class="m-0 fw-bold"><i class="fa-solid fa-object-group text-primary me-2"></i> مرکز عملیات دسته جمعی دام‌ها</h5>
+    </div>
+    <div class="card-body">
+        <ul class="nav nav-tabs mb-4" id="bulkTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active fw-bold" id="tab1-btn" data-bs-toggle="tab" data-bs-target="#tab1">
+                    <i class="fa-solid fa-filter me-2"></i> تب ۱: انتخاب دام و تشکیل لیست کاری ({{ working_list|length }} دام انتخاب شده)
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold" id="tab2-btn" data-bs-toggle="tab" data-bs-target="#tab2">
+                    <i class="fa-solid fa-bolt me-2"></i> تب ۲: عملیات سریع یکسان
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold" id="tab3-btn" data-bs-toggle="tab" data-bs-target="#tab3">
+                    <i class="fa-solid fa-list-check me-2"></i> تب ۳: عملیات جمعی کامل (بچ)
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="bulkTabContent">
+            <!-- Tab 1: Selection -->
+            <div class="tab-pane fade show active" id="tab1">
+                <form method="POST" action="{{ url_for('bulk_operations.select_animals') }}">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">بهاربند</label>
+                            <select name="pen_id" class="form-select">
+                                <option value="">همه بهاربندها</option>
+                                {% for p in pens %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">گونه</label>
+                            <select name="species" class="form-select">
+                                <option value="">همه گونه‌ها</option>
+                                <option value="sheep">گوسفند</option>
+                                <option value="goat">بز</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">جنسیت</label>
+                            <select name="sex" class="form-select">
+                                <option value="">همه جنسیت‌ها</option>
+                                <option value="female">ماده</option>
+                                <option value="male">نر</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-check me-1"></i> بروزرسانی لیست کاری</button>
+                        </div>
+                    </div>
+                </form>
+
+                <h6 class="fw-bold mt-4">دام‌های حاضر در لیست کاری فعلی:</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light"><tr><th>شماره پلاستیکی</th><th>سریال</th><th>گونه</th><th>جنسیت</th><th>بهاربند</th></tr></thead>
+                        <tbody>
+                            {% for a in selected_animals %}
+                            <tr>
+                                <td>{{ a.plastic_tag }}</td>
+                                <td>{{ a.serial_number }}</td>
+                                <td>{{ 'گوسفند' if (a.species.name == 'SHEEP' or a.species == 'sheep') else 'بز' }}</td>
+                                <td>{{ 'ماده' if (a.sex.name == 'FEMALE' or a.sex == 'female') else 'نر' }}</td>
+                                <td>{{ a.current_pen.name if a.current_pen else '---' }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center text-muted">هیچ دامی انتخاب نشده است. لطفاً فیلتر را اعمال کنید.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 2: Quick Uniform Operation -->
+            <div class="tab-pane fade" id="tab2">
+                <form method="POST" action="{{ url_for('bulk_operations.quick_apply') }}">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">نوع عملیات سریع</label>
+                            <select name="op_type" class="form-select" required>
+                                <option value="vaccination">واکسیناسیون همگانی</option>
+                                <option value="mark_removal">تغییر وضعیت به آماده حذف</option>
+                                <option value="cidr">سیدرگذاری دسته جمعی</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">تاریخ اجرای عملیات</label>
+                            <input type="text" name="date" class="form-control pdate" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">نام واکسن / توضیحات</label>
+                            <input type="text" name="detail" class="form-control" placeholder="عنوان یا جزئیات...">
+                        </div>
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-warning text-dark fw-bold" onclick="return confirm('آیا از اعمال این عملیات روی {{ working_list|length }} دام مطمئن هستید؟');">
+                                <i class="fa-solid fa-bolt me-1"></i> اجرا روی کلیه دام‌های لیست کاری
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tab 3: Complete Batch Operation -->
+            <div class="tab-pane fade" id="tab3">
+                <p class="fs-7 text-muted">در این قسمت می‌توانید برای هر دام عملیات دلخواه را ثبت کنید. کلیه ثبت‌ها در قالب یک تراکنش یکپارچه انجام شده و در صورت هرگونه خطا کل تراکنش رول‌بک خواهد شد.</p>
+                <form method="POST" action="{{ url_for('bulk_operations.batch_submit') }}">
+                    <table class="table table-bordered table-sm align-middle">
+                        <thead class="table-light">
+                            <tr><th>شماره دام</th><th>عملیات مورد نظر</th><th>تاریخ</th><th>جزئیات/مقدار</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for a in selected_animals %}
+                            <tr>
+                                <td>
+                                    <strong>{{ a.plastic_tag }}</strong>
+                                    <input type="hidden" name="animal_id[]" value="{{ a.id }}">
+                                </td>
+                                <td>
+                                    <select name="action[]" class="form-select form-select-sm">
+                                        <option value="none">بدون اقدام</option>
+                                        <option value="vaccine">واکسن انتروتوکسمی</option>
+                                        <option value="weight">ثبت وزن</option>
+                                        <option value="hoof">سم‌چینی</option>
+                                    </select>
+                                </td>
+                                <td><input type="text" name="date[]" class="form-control form-control-sm pdate"></td>
+                                <td><input type="text" name="val[]" class="form-control form-control-sm" placeholder="مقدار/توضیح"></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">دام برای نمایش در جدول بچ وجود ندارد.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="submit" class="btn btn-success fw-bold">ثبت نهایی تراکنش دسته جمعی</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

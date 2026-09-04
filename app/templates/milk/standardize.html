@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}استانداردسازی شیر - دام {{ animal.plastic_tag }}{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="m-0 fw-bold"><i class="fa-solid fa-calculator text-success me-2"></i> محاسبه و استانداردسازی شیر دام {{ animal.plastic_tag }}</h5>
+        <a href="{{ url_for('animals.detail', id=animal.id) }}" class="btn btn-outline-secondary">بازگشت به پرونده</a>
+    </div>
+    <div class="card-body">
+        {% if res.success %}
+        <div class="alert alert-success d-flex align-items-center mb-4">
+            <i class="fa-solid fa-check-circle fa-2x me-3"></i>
+            <div>
+                <h6 class="mb-1 fw-bold">مقدار شیر استاندارد شده روزانه:</h6>
+                <h3 class="m-0 text-success fw-bold">{{ res.avg }} کیلوگرم در روز</h3>
+                <small class="text-muted">محاسبه بر اساس {{ res.record_count }} رکورد معتبر بدون فاصله غیرمجاز</small>
+            </div>
+        </div>
+
+        <div class="mb-4" style="height: 350px;">
+            <canvas id="milkChart"></canvas>
+        </div>
+        {% else %}
+        <div class="alert alert-warning d-flex align-items-center mb-4">
+            <i class="fa-solid fa-triangle-exclamation fa-2x me-3"></i>
+            <div>
+                <h5 class="m-0 fw-bold">{{ res.message }}</h5>
+                <p class="m-0 fs-7 mt-1">تعداد یا فاصله زمانی رکوردهای ثبت شده جهت محاسبه فرمول استاندارد کافی یا منظم نیست.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if res.success %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('milkChart').getContext('2d');
+    const labels = [{% for r in res.records %}"{{ r.date|jalali }}",{% endfor %}];
+    const dataYields = [{% for r in res.records %}{{ r.total_amount }},{% endfor %}];
+    const avgLine = Array(labels.length).fill({{ res.avg }});
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'شیر روزانه ثبت شده (kg)',
+                    data: dataYields,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'میانگین استاندارد (kg)',
+                    data: avgLine,
+                    borderColor: '#198754',
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'کیلوگرم' } }
+            }
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

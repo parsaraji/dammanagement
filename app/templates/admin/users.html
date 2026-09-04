@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}مدیریت کاربران{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 fw-bold"><i class="fa-solid fa-user-gear text-primary me-2"></i> ایجاد / ویرایش کاربر</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.users') }}">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3"><label class="form-label">نام کاربری *</label>{{ form.username(class="form-control") }}</div>
+                    <div class="mb-3"><label class="form-label">رمز عبور</label>{{ form.password(class="form-control") }}</div>
+                    <div class="mb-3"><label class="form-label">نام و نام خانوادگی</label>{{ form.full_name(class="form-control") }}</div>
+                    <div class="mb-3"><label class="form-label">نقش کاربر *</label>{{ form.role(class="form-select") }}</div>
+                    <div class="mb-3 form-check">{{ form.is_active(class="form-check-input") }}<label class="form-check-label">حساب فعال است</label></div>
+                    {{ form.submit(class="btn btn-primary w-100") }}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 fw-bold"><i class="fa-solid fa-users-gear text-primary me-2"></i> لیست کاربران سامانه</div>
+            <div class="card-body">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light"><tr><th>نام کاربری</th><th>نام کامل</th><th>نقش</th><th>وضعیت</th></tr></thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td><strong>{{ u.username }}</strong></td>
+                            <td>{{ u.full_name or '---' }}</td>
+                            <td><span class="badge bg-primary">{{ u.role.value }}</span></td>
+                            <td>{{ 'فعال' if u.is_active else 'غیرفعال' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}سامانه مدیریت دام سبک (گوسفند و بز){% endblock %}</title>
+
+    <!-- Bootstrap 5 RTL -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- DataTables Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <!-- Persian Datepicker Local CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/persian-datepicker/persian-datepicker.min.css') }}">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Right Sidebar in RTL -->
+            <div class="col-md-3 col-lg-2 sidebar p-3 border-start">
+                <div class="text-center mb-4 pb-2 border-bottom">
+                    <h5 class="fw-bold text-white"><i class="fa-solid fa-sheep me-2"></i>دام سبک مدیران</h5>
+                    <small class="text-white-50">سامانه جامع مدیریت گله</small>
+                </div>
+
+                <div class="nav flex-column nav-pills me-0" id="sidebarMenu">
+                    <a class="nav-link text-white {{ 'active' if request.endpoint == 'dashboard.index' else '' }}" href="{{ url_for('dashboard.index') }}">
+                        <i class="fa-solid fa-gauge me-2"></i> داشبورد
+                    </a>
+
+                    <!-- Accordion Menu: Operations -->
+                    <div class="accordion accordion-flush my-2" id="accordionOps">
+                        <div class="accordion-item bg-transparent text-white border-0">
+                            <h2 class="accordion-header" id="headingOps">
+                                <button class="accordion-button bg-transparent text-white shadow-none px-2 py-2 fs-6" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOps" aria-expanded="true" aria-controls="collapseOps">
+                                    <i class="fa-solid fa-list-check me-2"></i> منوی عملیات
+                                </button>
+                            </h2>
+                            <div id="collapseOps" class="accordion-collapse collapse show" aria-labelledby="headingOps">
+                                <div class="accordion-body p-0 ps-3">
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('animals.list') }}"><i class="fa-solid fa-paw me-2"></i> مشخصات دام‌ها</a>
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('animals.female_status') }}"><i class="fa-solid fa-venus me-2"></i> وضعیت دام‌های ماده</a>
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('milk.milk_bulk') }}"><i class="fa-solid fa-cow me-2"></i> رکوردگیری شیر گروهی</a>
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('bulk_operations.index') }}"><i class="fa-solid fa-object-group me-2"></i> عملیات جمعی</a>
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('pens.list') }}"><i class="fa-solid fa-warehouse me-2"></i> جابجایی و بهاربندها</a>
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('herd_composition.index') }}"><i class="fa-solid fa-chart-pie me-2"></i> ترکیب گله</a>
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('sperm_bank.list') }}"><i class="fa-solid fa-vial me-2"></i> بانک اسپرم</a>
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('medicine_warehouse.list') }}"><i class="fa-solid fa-pills me-2"></i> انبار دارو</a>
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('reports.index') }}"><i class="fa-solid fa-file-invoice me-2"></i> گزارش‌ها</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accordion Menu: Management -->
+                    <div class="accordion accordion-flush my-2" id="accordionAdmin">
+                        <div class="accordion-item bg-transparent text-white border-0">
+                            <h2 class="accordion-header" id="headingAdmin">
+                                <button class="accordion-button bg-transparent text-white shadow-none px-2 py-2 fs-6" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdmin" aria-expanded="true" aria-controls="collapseAdmin">
+                                    <i class="fa-solid fa-sliders me-2"></i> منوی مدیریت
+                                </button>
+                            </h2>
+                            <div id="collapseAdmin" class="accordion-collapse collapse show" aria-labelledby="headingAdmin">
+                                <div class="accordion-body p-0 ps-3">
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('admin.defaults') }}"><i class="fa-solid fa-tags me-2"></i> مقادیر پیش‌فرض</a>
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('admin.program_settings') }}"><i class="fa-solid fa-gear me-2"></i> تنظیمات برنامه</a>
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('admin.staff') }}"><i class="fa-solid fa-user-doctor me-2"></i> پرسنل و دامپزشکان</a>
+                                    {% if current_user.role.value == 'admin' %}
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('admin.users') }}"><i class="fa-solid fa-users-gear me-2"></i> مدیریت کاربران</a>
+                                    {% endif %}
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('admin.support') }}"><i class="fa-solid fa-headset me-2"></i> پشتیبانی</a>
+                                    <a class="nav-link text-white-50 py-1 fs-7" href="{{ url_for('admin.server_connection') }}"><i class="fa-solid fa-server me-2"></i> اتصال به سرور</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a class="nav-link text-danger mt-4" href="{{ url_for('auth.logout') }}">
+                        <i class="fa-solid fa-right-from-bracket me-2"></i> خروج از حساب
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <!-- Topbar -->
+                <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded shadow-sm">
+                    <form action="{{ url_for('animals.search_quick') }}" method="GET" class="d-flex w-50">
+                        <div class="input-group">
+                            <input type="text" name="q" class="form-control" placeholder="جستجوی سریع دام (شماره پلاستیکی / سریال)..." required>
+                            <button class="btn btn-outline-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> جستجو</button>
+                        </div>
+                    </form>
+
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-info text-dark me-3 fs-6 p-2">
+                            <i class="fa-regular fa-calendar-check me-1"></i> {{ current_date_jalali }}
+                        </span>
+                        <div class="dropdown">
+                            <button class="btn btn-light dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown">
+                                <i class="fa-solid fa-user-circle text-primary me-1"></i> {{ current_user.full_name or current_user.username }} ({{ current_user.role.value }})
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket me-2"></i> خروج</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="container py-5">
+        {% block auth_content %}{% endblock %}
+    </div>
+    {% endif %}
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Local Persian Datepicker Vendor JS -->
+    <script src="{{ url_for('static', filename='vendor/persian-datepicker/persian-date.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/persian-datepicker/persian-datepicker.min.js') }}"></script>
+    <!-- Local App JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% import "partials/_datatable.html" as dt %}
+
+{% block title %}وضعیت دام‌های ماده{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3">
+        <h5 class="m-0 fw-bold"><i class="fa-solid fa-venus text-danger me-2"></i> گزارش و وضعیت دام‌های ماده</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="femaleTable" class="table table-hover table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>شماره پلاستیکی</th>
+                        <th>گونه / نژاد</th>
+                        <th>شکم</th>
+                        <th>تاریخ آخرین تلقیح</th>
+                        <th>وضعیت آبستنی</th>
+                        <th>بهاربند</th>
+                        <th>پرونده</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in females %}
+                    <tr>
+                        <td><strong>{{ f.plastic_tag }}</strong></td>
+                        <td>{{ 'گوسفند' if (f.species.name == 'SHEEP' or f.species == 'sheep') else 'بز' }} - {{ f.breed or '' }}</td>
+                        <td>{{ f.parity }}</td>
+                        <td>{{ f.last_insem.date|jalali if f.last_insem else '---' }}</td>
+                        <td>
+                            {% if f.is_pregnant %}
+                            <span class="badge bg-success">آبستن</span>
+                            {% else %}
+                            <span class="badge bg-secondary">غیرآبستن / نامشخص</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ f.current_pen.name if f.current_pen else '---' }}</td>
+                        <td><a href="{{ url_for('animals.detail', id=f.id) }}" class="btn btn-sm btn-outline-primary">مشاهده</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{{ dt.render_datatable('femaleTable') }}
+{% endblock %}

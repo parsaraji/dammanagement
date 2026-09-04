@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}اتصال به سرور مرکزی{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 fw-bold"><i class="fa-solid fa-server text-primary me-2"></i> تنظیمات اتصال به سرور مرکزی همگام‌سازی</div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="fa-solid fa-circle-info me-2"></i> این بخش جهت پیکربندی همگام‌سازی اطلاعات با سرور مرکزی دامپروری طراحی شده است.
+        </div>
+        <form method="POST" action="{{ url_for('admin.server_connection') }}">
+            <div class="mb-3">
+                <label class="form-label">آدرس سرور مرکزی (URL)</label>
+                <input type="url" name="server_url" class="form-control" value="https://sync.livestock-manager.ir/api/v1">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">کلید معتبرسازی (API Key)</label>
+                <input type="password" name="api_key" class="form-control" value="demo-api-key-123456">
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" name="auto_sync" class="form-check-input" id="syncCheck" checked>
+                <label class="form-check-label" for="syncCheck">همگام‌سازی خودکار روزانه فعال باشد</label>
+            </div>
+            <button type="submit" class="btn btn-primary">ذخیره تنظیمات سرور</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

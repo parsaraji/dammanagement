@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% import "partials/_datatable.html" as dt %}
+
+{% block title %}مدیریت بهاربندها و جابجایی{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="m-0 fw-bold"><i class="fa-solid fa-warehouse text-primary me-2"></i> بهاربندهای فعال</h5>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addPenModal">+ بهاربند جدید</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="pensTable" class="table table-hover table-bordered">
+                        <thead class="table-light">
+                            <tr><th>کد</th><th>نام بهاربند</th><th>نوع</th><th>ظرفیت (رأس)</th><th>موجودی فعلی</th><th>توضیحات</th><th>عملیات</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for p in pens %}
+                            <tr>
+                                <td><strong>{{ p.code }}</strong></td>
+                                <td>{{ p.name }}</td>
+                                <td><span class="badge bg-info text-dark">{{ p.pen_type }}</span></td>
+                                <td>{{ p.capacity }}</td>
+                                <td class="fw-bold text-primary">{{ p.animals.count() }}</td>
+                                <td>{{ p.notes or '---' }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('pens.delete', id=p.id) }}" class="d-inline" onsubmit="return confirm('آیا از حذف این بهاربند مطمئن هستید؟');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 fw-bold">
+                <i class="fa-solid fa-arrows-left-right text-success me-2"></i> ثبت جابجایی دام
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('pens.move') }}">
+                    {{ move_form.hidden_tag() }}
+                    <div class="mb-3">
+                        <label class="form-label">تاریخ جابجایی</label>
+                        {{ move_form.date(class="form-control pdate") }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">انتخاب دام</label>
+                        {{ move_form.animal_id(class="form-select") }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">بهاربند مقصد</label>
+                        {{ move_form.to_pen_id(class="form-select") }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">علت جابجایی</label>
+                        {{ move_form.reason(class="form-control", placeholder="مثلاً: انتقال به زایمان") }}
+                    </div>
+                    {{ move_form.submit(class="btn btn-success w-100") }}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Pen Modal -->
+<div class="modal fade" id="addPenModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white"><h5 class="modal-title">افزودن بهاربند جدید</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('pens.new') }}">
+                {{ form.hidden_tag() }}
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">نام بهاربند *</label>{{ form.name(class="form-control") }}</div>
+                    <div class="mb-3"><label class="form-label">کد بهاربند *</label>{{ form.code(class="form-control") }}</div>
+                    <div class="mb-3"><label class="form-label">ظرفیت (رأس)</label>{{ form.capacity(class="form-control") }}</div>
+                    <div class="mb-3"><label class="form-label">نوع بهاربند</label>{{ form.pen_type(class="form-select") }}</div>
+                    <div class="mb-3"><label class="form-label">توضیحات</label>{{ form.notes(class="form-control") }}</div>
+                </div>
+                <div class="modal-footer">{{ form.submit(class="btn btn-primary") }}</div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{ dt.render_datatable('pensTable') }}
+{% endblock %}

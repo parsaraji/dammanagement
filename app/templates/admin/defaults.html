@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}مقادیر پیش‌فرض سیستم{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 fw-bold"><i class="fa-solid fa-plus text-primary me-2"></i> تعریف مقدار پیش‌فرض جدید</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.defaults') }}">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.category.label.text }}</label>
+                        {{ form.category(class="form-select") }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.value.label.text }}</label>
+                        {{ form.value(class="form-control", placeholder="عنوان مقدار...") }}
+                    </div>
+                    {{ form.submit(class="btn btn-primary w-100") }}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 fw-bold"><i class="fa-solid fa-list me-2"></i> مقادیر پیش‌فرض ثبت شده</div>
+            <div class="card-body">
+                <table class="table table-bordered table-sm">
+                    <thead class="table-light"><tr><th>دسته‌بندی</th><th>مقدار</th><th>عملیات</th></tr></thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td><span class="badge bg-secondary">{{ item.category }}</span></td>
+                            <td>{{ item.value }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.delete_lookup', id=item.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('حذف شود؟');"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center text-muted">موردی ثبت نشده است.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

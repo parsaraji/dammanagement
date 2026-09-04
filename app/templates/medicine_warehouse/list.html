@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% import "partials/_datatable.html" as dt %}
+
+{% block title %}انبار دارو و واکسن{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="m-0 fw-bold"><i class="fa-solid fa-pills text-danger me-2"></i> انبار دارو و واکسن</h5>
+                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#addMedModal">+ تعریف داروی جدید</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="medTable" class="table table-hover table-bordered">
+                        <thead class="table-light">
+                            <tr><th>نام دارو</th><th>دسته‌بندی</th><th>واحد</th><th>موجودی فعلی</th><th>عملیات</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for m in medicines %}
+                            <tr>
+                                <td><strong>{{ m.name }}</strong></td>
+                                <td>{{ m.category or 'عمومی' }}</td>
+                                <td>{{ m.unit }}</td>
+                                <td><span class="badge bg-success fs-6">{{ m.current_stock }}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#medTxModal{{ m.id }}">ورود / خروج</button>
+                                </td>
+                            </tr>
+
+                            <!-- Med Tx Modal -->
+                            <div class="modal fade" id="medTxModal{{ m.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-danger text-white"><h5 class="modal-title">ثبت ورود/خروج {{ m.name }}</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                                        <form method="POST" action="{{ url_for('medicine_warehouse.transaction', id=m.id) }}">
+                                            <div class="modal-body">
+                                                <div class="mb-3"><label class="form-label">نوع تراکنش</label><select name="transaction_type" class="form-select"><option value="in">ورود به انبار</option><option value="out">خروج از انبار</option></select></div>
+                                                <div class="mb-3"><label class="form-label">تاریخ</label><input type="text" name="date" class="form-control pdate" required></div>
+                                                <div class="mb-3"><label class="form-label">مقدار ({{ m.unit }})</label><input type="number" step="0.1" name="quantity" class="form-control" required min="0.1"></div>
+                                                <div class="mb-3"><label class="form-label">شماره فاکتور / تامین‌کننده</label><input type="text" name="supplier" class="form-control"></div>
+                                            </div>
+                                            <div class="modal-footer"><button type="submit" class="btn btn-danger">ثبت تراکنش دارویی</button></div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 fw-bold"><i class="fa-solid fa-history text-secondary me-2"></i> آخرین تراکنش‌های دارویی</div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush fs-7">
+                    {% for st in recent_stocks %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ st.medicine.name }}</strong>
+                            <div class="text-muted fs-8">{{ st.date|jalali }}</div>
+                        </div>
+                        <span class="badge bg-{{ 'success' if (st.transaction_type.name == 'IN' or st.transaction_type == 'in') else 'danger' }}">
+                            {{ '+' if (st.transaction_type.name == 'IN' or st.transaction_type == 'in') else '-' }}{{ st.quantity }} {{ st.medicine.unit }}
+                        </span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted text-center">تراکنشی یافت نشد.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Medicine Modal -->
+<div class="modal fade" id="addMedModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white"><h5 class="modal-title">افزودن داروی جدید</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('medicine_warehouse.new') }}">
+                {{ form.hidden_tag() }}
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">نام دارو *</label>{{ form.name(class="form-control") }}</div>
+                    <div class="mb-3"><label class="form-label">دسته‌بندی</label>{{ form.category(class="form-select") }}</div>
+                    <div class="mb-3"><label class="form-label">واحد اندازه گیری</label>{{ form.unit(class="form-control") }}</div>
+                </div>
+                <div class="modal-footer">{{ form.submit(class="btn btn-danger") }}</div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{ dt.render_datatable('medTable') }}
+{% endblock %}

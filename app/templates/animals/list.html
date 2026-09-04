@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% import "partials/_datatable.html" as dt %}
+
+{% block title %}لیست مشخصات دام‌ها{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="m-0 fw-bold"><i class="fa-solid fa-paw text-primary me-2"></i> لیست مشخصات دام‌ها</h5>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAnimalModal">
+            <i class="fa-solid fa-plus me-1"></i> ثبت دام جدید
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="animalsTable" class="table table-hover table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>شماره پلاستیکی</th>
+                        <th>شماره سریال</th>
+                        <th>گونه / نژاد</th>
+                        <th>جنسیت</th>
+                        <th>تاریخ تولد</th>
+                        <th>شکم</th>
+                        <th>بهاربند</th>
+                        <th>شناسه ملی</th>
+                        <th>وضعیت</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in animals %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('animals.detail', id=a.id) }}" class="fw-bold text-decoration-none">
+                                {{ a.plastic_tag }}
+                            </a>
+                        </td>
+                        <td>{{ a.serial_number }}</td>
+                        <td>
+                            {% if a.species.name == 'SHEEP' or a.species == 'sheep' %}
+                            <span class="badge bg-secondary">گوسفند</span>
+                            {% else %}
+                            <span class="badge bg-dark">بز</span>
+                            {% endif %}
+                            {{ a.breed or '---' }}
+                        </td>
+                        <td>{{ 'ماده' if (a.sex.name == 'FEMALE' or a.sex == 'female') else 'نر' }}</td>
+                        <td>{{ a.birth_date|jalali }}</td>
+                        <td>{{ a.parity }}</td>
+                        <td>{{ a.current_pen.name if a.current_pen else '---' }}</td>
+                        <td>{{ a.national_id or '---' }}</td>
+                        <td>
+                            {% if a.status.name == 'ALIVE' or a.status == 'alive' %}
+                            <span class="badge bg-success">زنده</span>
+                            {% elif a.status.name == 'READY_FOR_REMOVAL' or a.status == 'ready_for_removal' %}
+                            <span class="badge bg-warning text-dark">آماده حذف</span>
+                            {% else %}
+                            <span class="badge bg-danger">حذف شده</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    مدیریت
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{{ url_for('animals.detail', id=a.id) }}"><i class="fa-solid fa-folder-open me-2 text-primary"></i> پرونده کامل</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('animals.id_card_pdf', id=a.id) }}" target="_blank"><i class="fa-solid fa-id-card me-2 text-info"></i> چاپ کارت هویت (PDF)</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button class="dropdown-item text-warning" data-bs-toggle="modal" data-bs-target="#statusModal{{ a.id }}">
+                                            <i class="fa-solid fa-arrows-rotate me-2"></i> تغییر سریع وضعیت
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#removalModal{{ a.id }}">
+                                            <i class="fa-solid fa-right-from-bracket me-2"></i> ثبت فرم حذف / خروج
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Quick Status Modal -->
+                            <div class="modal fade" id="statusModal{{ a.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">تغییر وضعیت دام {{ a.plastic_tag }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form method="POST" action="{{ url_for('animals.ready_for_removal', id=a.id) }}" data-ajax="true">
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">وضعیت جدید</label>
+                                                    <select name="status" class="form-select">
+                                                        <option value="ready_for_removal">آماده حذف</option>
+                                                        <option value="alive">زنده و فعال</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">دلیل تغییر وضعیت</label>
+                                                    <input type="text" name="removal_reason" class="form-control" placeholder="علت تغییر وضعیت...">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                                                <button type="submit" class="btn btn-warning">ذخیره تغییرات</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Full Removal Modal -->
+                            <div class="modal fade" id="removalModal{{ a.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">فرم خروج / حذف دام {{ a.plastic_tag }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form method="POST" action="{{ url_for('animals.remove', id=a.id) }}" data-ajax="true">
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">تاریخ خروج</label>
+                                                    <input type="text" name="removal_date" class="form-control pdate" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">دلیل دقیق خروج</label>
+                                                    <input type="text" name="removal_reason" class="form-control" required placeholder="مثلاً: خروج پروار، تلفات، کشتار...">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">شماره فرم / برگه</label>
+                                                    <input type="text" name="removal_form_number" class="form-control">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">نام خریدار / تحویل‌گیرنده</label>
+                                                    <input type="text" name="removal_buyer_name" class="form-control">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                                                <button type="submit" class="btn btn-danger">ثبت خروج قطعی</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Animal Modal -->
+<div class="modal fade" id="addAnimalModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-plus me-2"></i> ثبت دام جدید</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('animals.new') }}" data-ajax="true">
+                {{ form.hidden_tag() }}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.plastic_tag.label.text }} *</label>
+                            {{ form.plastic_tag(class="form-control") }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.serial_number.label.text }} *</label>
+                            {{ form.serial_number(class="form-control") }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.species.label.text }}</label>
+                            {{ form.species(class="form-select") }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.sex.label.text }}</label>
+                            {{ form.sex(class="form-select") }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.birth_date.label.text }} *</label>
+                            {{ form.birth_date(class="form-control pdate") }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.breed.label.text }}</label>
+                            {{ form.breed(class="form-select") }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.current_pen_id.label.text }}</label>
+                            {{ form.current_pen_id(class="form-select") }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.origin.label.text }}</label>
+                            {{ form.origin(class="form-select") }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.mother_id.label.text }}</label>
+                            {{ form.mother_id(class="form-select") }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.father_id.label.text }}</label>
+                            {{ form.father_id(class="form-select") }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{ dt.render_datatable('animalsTable') }}
+{% endblock %}

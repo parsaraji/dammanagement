@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}داشبورد مدیریتی{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <!-- Stat Cards -->
+    <div class="col-md-3">
+        <div class="card bg-primary text-white p-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0">کل دام‌های زنده</h6>
+                    <h2 class="fw-bold my-1">{{ total_animals }}</h2>
+                    <small>رأس گوسفند و بز</small>
+                </div>
+                <i class="fa-solid fa-paw fa-3x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-success text-white p-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0">دام‌های ماده</h6>
+                    <h2 class="fw-bold my-1">{{ total_females }}</h2>
+                    <small>میش و بز مولد</small>
+                </div>
+                <i class="fa-solid fa-venus fa-3x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark p-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0">دام‌های آبستن</h6>
+                    <h2 class="fw-bold my-1">{{ total_pregnant }}</h2>
+                    <small>بر اساس تلقیح‌های ثبت شده</small>
+                </div>
+                <i class="fa-solid fa-baby fa-3x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-info text-dark p-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0">تولید شیر امروز</h6>
+                    <h2 class="fw-bold my-1">{{ today_milk_total }}</h2>
+                    <small>کیلوگرم شیر</small>
+                </div>
+                <i class="fa-solid fa-bottle-water fa-3x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Navigation Cards -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold py-3">
+                <i class="fa-solid fa-bolt text-primary me-2"></i> دسترسی سریع به عملیات
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <a href="{{ url_for('animals.list') }}" class="btn btn-outline-primary w-100 py-3 text-start">
+                            <i class="fa-solid fa-paw fa-lg me-2"></i> لیست و افزودن دام
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('milk.milk_bulk') }}" class="btn btn-outline-success w-100 py-3 text-start">
+                            <i class="fa-solid fa-cow fa-lg me-2"></i> رکوردگیری شیر گروهی
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('bulk_operations.index') }}" class="btn btn-outline-warning text-dark w-100 py-3 text-start">
+                            <i class="fa-solid fa-object-group fa-lg me-2"></i> عملیات دسته جمعی
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('pens.list') }}" class="btn btn-outline-info text-dark w-100 py-3 text-start">
+                            <i class="fa-solid fa-warehouse fa-lg me-2"></i> بهاربندها و جابجایی
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold py-3">
+                <i class="fa-solid fa-boxes-stacked text-success me-2"></i> انبارها و موجودی
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <a href="{{ url_for('sperm_bank.list') }}" class="btn btn-outline-secondary w-100 py-3 text-start">
+                            <i class="fa-solid fa-vial fa-lg me-2"></i> موجودی بانک اسپرم
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('medicine_warehouse.list') }}" class="btn btn-outline-danger w-100 py-3 text-start">
+                            <i class="fa-solid fa-pills fa-lg me-2"></i> موجودی انبار دارو
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('herd_composition.index') }}" class="btn btn-outline-dark w-100 py-3 text-start">
+                            <i class="fa-solid fa-chart-pie fa-lg me-2"></i> ترکیب گله
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('reports.index') }}" class="btn btn-outline-primary w-100 py-3 text-start">
+                            <i class="fa-solid fa-file-invoice fa-lg me-2"></i> گزارش‌گیری و خروجی
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

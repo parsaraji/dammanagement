@@ -1,0 +1,22 @@
+{
+    "emptyTable": "داده‌ای برای نمایش وجود ندارد",
+    "info": "نمایش _START_ تا _END_ از _TOTAL_ ردیف",
+    "infoEmpty": "نمایش 0 تا 0 از 0 ردیف",
+    "infoFiltered": "(فیلتر شده از مجموع _MAX_ ردیف)",
+    "infoThousands": ",",
+    "lengthMenu": "نمایش _MENU_ ردیف",
+    "loadingRecords": "در حال بارگذاری...",
+    "processing": "در حال پردازش...",
+    "search": "جستجو:",
+    "zeroRecords": "هیچ موردی پیدا نشد",
+    "paginate": {
+        "first": "ابتدا",
+        "last": "انتها",
+        "next": "بعدی",
+        "previous": "قبلی"
+    },
+    "aria": {
+        "sortAscending": ": فعال‌سازی نمایش به صورت صعودی",
+        "sortDescending": ": فعال‌سازی نمایش به صورت نزولی"
+    }
+}
