@@ -75,6 +75,15 @@ def new():
             status=AnimalStatus.ALIVE
         )
         db.session.add(animal)
+        db.session.flush()
+
+        # Link to calving offspring if calving_id provided
+        calving_id_raw = request.form.get('calving_id')
+        if calving_id_raw and calving_id_raw.isdigit():
+            from app.models.reproduction import CalvingOffspring
+            co = CalvingOffspring(calving_id=int(calving_id_raw), animal_id=animal.id)
+            db.session.add(co)
+
         db.session.commit()
         return jsonify({'success': True, 'message': 'دام با موفقیت ثبت شد.', 'reload': True})
 

@@ -59,10 +59,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             },
-            error: function(xhr) {
+            error: function(xhr, status, error) {
+                console.error('AJAX Form Error:', xhr, status, error);
                 var msg = 'خطایی رخ داده است.';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     msg = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    msg += '\n' + xhr.responseText.substring(0, 300);
                 }
                 alert(msg);
             },

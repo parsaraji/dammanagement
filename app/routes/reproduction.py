@@ -85,6 +85,31 @@ def cidr_new(animal_id):
     db.session.commit()
     return jsonify({'success': True, 'message': 'سیدرگذاری ثبت شد.', 'reload': True})
 
+@bp.route('/reproduction/<int:animal_id>/heat-no-insemination', methods=['POST'])
+@login_required
+def heat_no_insemination_new(animal_id):
+    animal = Animal.query.get_or_404(animal_id)
+    raw_date = request.form.get('date')
+    try:
+        d = from_jalali(raw_date) if raw_date else None
+    except ValueError as e:
+        return jsonify({'success': False, 'message': f'تاریخ وارد شده نامعتبر است: {str(e)}'})
+
+    if not d:
+        return jsonify({'success': False, 'message': 'لطفاً تاریخ فحلی را وارد کنید.'})
+
+    heat = HeatNoInsemination(
+        animal_id=animal.id,
+        date=d,
+        heat_symptoms=request.form.get('heat_symptoms'),
+        heat_detector=request.form.get('heat_detector'),
+        heat_description=request.form.get('heat_description'),
+        created_by_user_id=current_user.id
+    )
+    db.session.add(heat)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'فحلی بدون تلقیح با موفقیت ثبت شد.', 'reload': True})
+
 @bp.route('/reproduction/<int:animal_id>/dry-off', methods=['POST'])
 @login_required
 def dry_off_new(animal_id):
@@ -106,6 +131,45 @@ def dry_off_new(animal_id):
     db.session.add(dry)
     db.session.commit()
     return jsonify({'success': True, 'message': 'خشکی با موفقیت ثبت شد.', 'reload': True})
+
+@bp.route('/reproduction/dry-off/<int:id>/end', methods=['POST'])
+@login_required
+def dry_off_end(id):
+    dry = db.session.get(DryOff, id)
+    if not dry:
+        return jsonify({'success': False, 'message': 'سابقه خشکی یافت نشد.'})
+
+    raw_date = request.form.get('end_date')
+    try:
+        end_d = from_jalali(raw_date) if raw_date else None
+    except ValueError as e:
+        return jsonify({'success': False, 'message': f'تاریخ پایان خشکی نامعتبر است: {str(e)}'})
+
+    dry.end_date = end_d
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'پایان خشکی ثبت شد.', 'reload': True})
+
+@bp.route('/reproduction/insemination/<int:id>/toggle-pregnancy', methods=['POST'])
+@login_required
+def insemination_toggle_pregnancy(id):
+    insem = db.session.get(Insemination, id)
+    if not insem:
+        return jsonify({'success': False, 'message': 'سابقه تلقیح یافت نشد.'})
+
+    insem.led_to_pregnancy = not insem.led_to_pregnancy
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'وضعیت آبستنی تلقیح اصلاح شد.', 'reload': True})
+
+@bp.route('/reproduction/insemination/<int:id>/delete', methods=['POST'])
+@login_required
+def insemination_delete(id):
+    insem = db.session.get(Insemination, id)
+    if not insem:
+        return jsonify({'success': False, 'message': 'سابقه تلقیح یافت نشد.'})
+
+    db.session.delete(insem)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'تلقیح با موفقیت حذف شد.', 'reload': True})
 
 @bp.route('/reproduction/<int:animal_id>/calving', methods=['POST'])
 @login_required

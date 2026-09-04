@@ -15,11 +15,19 @@ bp = Blueprint('reports', __name__)
 def index():
     return render_template('reports/index.html')
 
+def parse_date_safe(raw):
+    if not raw or not raw.strip():
+        return None
+    try:
+        return from_jalali(raw.strip())
+    except Exception:
+        return None
+
 @bp.route('/reports/calving')
 @login_required
 def calving_report():
-    start_d = from_jalali(request.args.get('start_date')) if request.args.get('start_date') else None
-    end_d = from_jalali(request.args.get('end_date')) if request.args.get('end_date') else None
+    start_d = parse_date_safe(request.args.get('start_date'))
+    end_d = parse_date_safe(request.args.get('end_date'))
     fmt = request.args.get('format', 'excel')
 
     query = Calving.query

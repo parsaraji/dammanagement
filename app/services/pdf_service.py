@@ -143,7 +143,7 @@ def generate_pdf_report(title, headers, rows):
         <style>
             @font-face {{
                 font-family: 'Vazirmatn';
-                src: url('{FONT_PATH}');
+                src: url('{FONT_URI}');
             }}
             @page {{
                 size: A4 portrait;

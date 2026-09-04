@@ -119,21 +119,24 @@
         <!-- Tab 3: Medical & Reproduction -->
         <div id="tab-repro" class="tab-content-panel d-none">
             <div class="card shadow-sm border-0 mb-3">
-                <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
+                <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <span><i class="fa-solid fa-heart-pulse text-danger me-2"></i> سوابق پزشکی و تولیدمثلی</span>
-                    <div class="btn-group">
+                    <div class="btn-group flex-wrap">
                         <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#insemModal">+ تلقیح</button>
                         <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#cidrModal">+ سیدر</button>
                         <button class="btn btn-sm btn-outline-warning text-dark" data-bs-toggle="modal" data-bs-target="#dryModal">+ خشکی</button>
                         <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#calvingModal">+ زایش</button>
                         <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#vacModal">+ واکسن</button>
+                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#treatmentModal">+ درمان/ویزیت</button>
+                        <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#mnvModal">+ دارو بدون ویزیت</button>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#heatModal">+ فحلی بدون تلقیح</button>
                     </div>
                 </div>
                 <div class="card-body">
                     <h6>آخرین تلقیح‌ها</h6>
-                    <table class="table table-sm table-bordered">
+                    <table class="table table-sm table-bordered mb-4">
                         <thead>
-                            <tr><th>تاریخ</th><th>نوع</th><th>اسپرم/پدر</th><th>آبستنی</th></tr>
+                            <tr><th>تاریخ</th><th>نوع</th><th>اسپرم/پدر</th><th>آبستنی</th><th>عملیات</th></tr>
                         </thead>
                         <tbody>
                             {% for i in animal.inseminations.order_by(Insemination.date.desc()).all() %}
@@ -142,9 +145,115 @@
                                 <td>{{ 'مصنوعی' if (i.insemination_type.name == 'ARTIFICIAL' or i.insemination_type == 'artificial') else 'طبیعی' }}</td>
                                 <td>{{ i.sperm.code if i.sperm else (i.sire_animal.plastic_tag if i.sire_animal else '---') }}</td>
                                 <td>{{ 'بله' if i.led_to_pregnancy else 'خیر' }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('reproduction.insemination_toggle_pregnancy', id=i.id) }}" data-ajax="true" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-xs btn-outline-info p-1 py-0 fs-8">اصلاح آبستنی</button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('reproduction.insemination_delete', id=i.id) }}" data-ajax="true" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-xs btn-outline-danger p-1 py-0 fs-8">حذف</button>
+                                    </form>
+                                </td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="4" class="text-center text-muted">داده‌ای ثبت نشده است</td></tr>
+                            <tr><td colspan="5" class="text-center text-muted">داده‌ای ثبت نشده است</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h6>سوابق سیدرگذاری</h6>
+                    <table class="table table-sm table-bordered mb-4">
+                        <thead><tr><th>تاریخ ورود</th><th>تاریخ خروج</th><th>نوع</th><th>توضیحات</th></tr></thead>
+                        <tbody>
+                            {% for c in animal.cidrs.all() %}
+                            <tr><td>{{ c.insert_date|jalali }}</td><td>{{ c.remove_date|jalali if c.remove_date else '---' }}</td><td>{{ c.cidr_type or '---' }}</td><td>{{ c.notes or '---' }}</td></tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">سابقه‌ای ثبت نشده است</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h6>سوابق خشکی</h6>
+                    <table class="table table-sm table-bordered mb-4">
+                        <thead><tr><th>تاریخ شروع</th><th>تاریخ پایان</th><th>توضیحات</th><th>عملیات</th></tr></thead>
+                        <tbody>
+                            {% for d in animal.dry_offs.all() %}
+                            <tr>
+                                <td>{{ d.start_date|jalali }}</td>
+                                <td>{{ d.end_date|jalali if d.end_date else 'در حال خشکی' }}</td>
+                                <td>{{ d.notes or '---' }}</td>
+                                <td>
+                                    {% if not d.end_date %}
+                                    <button class="btn btn-xs btn-outline-warning p-1 py-0 fs-8" onclick="$('#dryEndId').val('{{ d.id }}'); $('#dryEndModal').modal('show');">ثبت پایان خشکی</button>
+                                    {% else %}
+                                    ---
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">سابقه‌ای ثبت نشده است</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h6>سوابق زایش</h6>
+                    <table class="table table-sm table-bordered mb-4">
+                        <thead><tr><th>تاریخ</th><th>نوع زایش</th><th>تعداد فرزندان</th></tr></thead>
+                        <tbody>
+                            {% for cal in animal.calvings.all() %}
+                            <tr><td>{{ cal.date|jalali }}</td><td>{{ cal.calving_type.value }}</td><td>{{ cal.offspring_count }}</td></tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-muted">سابقه‌ای ثبت نشده است</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h6>سوابق واکسیناسیون</h6>
+                    <table class="table table-sm table-bordered mb-4">
+                        <thead><tr><th>تاریخ</th><th>نام واکسن</th><th>دوز</th><th>عامل/تزریق‌کننده</th></tr></thead>
+                        <tbody>
+                            {% for v in animal.vaccinations.all() %}
+                            <tr><td>{{ v.date|jalali }}</td><td>{{ v.vaccine_name }}</td><td>{{ v.dose_number or '---' }}</td><td>{{ v.agent_name or '---' }}</td></tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">سابقه‌ای ثبت نشده است</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h6>سوابق درمان و ویزیت پزشکی</h6>
+                    <table class="table table-sm table-bordered mb-4">
+                        <thead><tr><th>تاریخ</th><th>نوع ویزیت</th><th>پزشک</th><th>علت</th><th>تشخیص</th><th>پایان درمان</th></tr></thead>
+                        <tbody>
+                            {% for tr in animal.treatments.all() %}
+                            <tr>
+                                <td>{{ tr.date|jalali }}</td>
+                                <td>{{ 'تولیدمثلی' if tr.visit_type.value == 'reproductive' else 'عمومی' }}</td>
+                                <td>{{ tr.doctor or '---' }}</td>
+                                <td>{{ tr.visit_reason or '---' }}</td>
+                                <td>{{ tr.diagnosis or '---' }}</td>
+                                <td>
+                                    {% if tr.treatment_end_date %}
+                                    {{ tr.treatment_end_date|jalali }}
+                                    {% else %}
+                                    <button class="btn btn-xs btn-outline-danger p-1 py-0 fs-8" onclick="$('#trEndId').val('{{ tr.id }}'); $('#trEndModal').modal('show');">پایان درمان</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="6" class="text-center text-muted">سابقه‌ای ثبت نشده است</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h6>سوابق مصرف دارو بدون ویزیت</h6>
+                    <table class="table table-sm table-bordered">
+                        <thead><tr><th>تاریخ تجویز</th><th>نام دارو</th><th>مقدار و واحد</th><th>روش مصرف</th></tr></thead>
+                        <tbody>
+                            {% for mnv in animal.medicines_no_visit.all() %}
+                            <tr><td>{{ mnv.prescribe_date|jalali }}</td><td>{{ mnv.medicine_name }}</td><td>{{ mnv.dose_amount }} {{ mnv.dose_unit or '' }}</td><td>{{ mnv.consumption_method or '---' }}</td></tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">سابقه‌ای ثبت نشده است</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -155,19 +264,86 @@
         <!-- Tab 4: Other Operations -->
         <div id="tab-other" class="tab-content-panel d-none">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
-                    <span><i class="fa-solid fa-ruler-combined me-2"></i> اندازهگیری، سم‌چینی و اسکور بدنی</span>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#measModal">+ ثبت وزن/اندازه‌گیری</button>
+                <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span><i class="fa-solid fa-ruler-combined me-2"></i> اندازه‌گیری، سم‌چینی و اسکور بدنی</span>
+                    <div class="btn-group flex-wrap">
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#measModal">+ ثبت وزن/اندازه‌گیری</button>
+                        <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#quarterModal">+ وضعیت کارتیه</button>
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#eventModal">+ وقایع یکبار</button>
+                        <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#bsModal">+ اسکور بدنی</button>
+                        <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#msModal">+ اسکور حرکتی</button>
+                        <button class="btn btn-sm btn-outline-warning text-dark" data-bs-toggle="modal" data-bs-target="#hoofModal">+ سم‌چینی</button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <h6>سوابق وزن و اندازه‌گیری</h6>
-                    <table class="table table-sm table-bordered">
+                    <table class="table table-sm table-bordered mb-4">
                         <thead><tr><th>تاریخ</th><th>نوع</th><th>مقدار</th></tr></thead>
                         <tbody>
                             {% for m in animal.measurements.order_by(Measurement.date.desc()).all() %}
                             <tr><td>{{ m.date|jalali }}</td><td>{{ m.measurement_type.value }}</td><td>{{ m.value }} {{ m.unit or '' }}</td></tr>
                             {% else %}
                             <tr><td colspan="3" class="text-center text-muted">داده‌ای برای نمایش وجود ندارد</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h6>سوابق کارتیه</h6>
+                    <table class="table table-sm table-bordered mb-4">
+                        <thead><tr><th>تاریخ</th><th>کارتیه</th><th>شرح مشکل</th></tr></thead>
+                        <tbody>
+                            {% for q in animal.quarters.all() %}
+                            <tr><td>{{ q.date|jalali }}</td><td>{{ q.quarter.value }}</td><td>{{ q.issue_description or '---' }}</td></tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-muted">سابقه‌ای ثبت نشده است</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h6>وقایع یکبار</h6>
+                    <table class="table table-sm table-bordered mb-4">
+                        <thead><tr><th>تاریخ</th><th>نوع واقعه</th><th>توضیحات</th></tr></thead>
+                        <tbody>
+                            {% for e in animal.one_time_events.all() %}
+                            <tr><td>{{ e.date|jalali }}</td><td>{{ e.event_type }}</td><td>{{ e.description or '---' }}</td></tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-muted">سابقه‌ای ثبت نشده است</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h6>سوابق اسکور بدنی</h6>
+                    <table class="table table-sm table-bordered mb-4">
+                        <thead><tr><th>تاریخ</th><th>اسکور (1-5)</th></tr></thead>
+                        <tbody>
+                            {% for bs in animal.body_scores.all() %}
+                            <tr><td>{{ bs.date|jalali }}</td><td>{{ bs.score }}</td></tr>
+                            {% else %}
+                            <tr><td colspan="2" class="text-center text-muted">سابقه‌ای ثبت نشده است</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h6>سوابق اسکور حرکتی</h6>
+                    <table class="table table-sm table-bordered mb-4">
+                        <thead><tr><th>تاریخ</th><th>اسکور (1-5)</th></tr></thead>
+                        <tbody>
+                            {% for ms in animal.movement_scores.all() %}
+                            <tr><td>{{ ms.date|jalali }}</td><td>{{ ms.score }}</td></tr>
+                            {% else %}
+                            <tr><td colspan="2" class="text-center text-muted">سابقه‌ای ثبت نشده است</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h6>سوابق سم‌چینی</h6>
+                    <table class="table table-sm table-bordered">
+                        <thead><tr><th>تاریخ</th><th>جلو چپ</th><th>جلو راست</th><th>عقب چپ</th><th>عقب راست</th></tr></thead>
+                        <tbody>
+                            {% for ht in animal.hoof_trimmings.all() %}
+                            <tr><td>{{ ht.date|jalali }}</td><td>{{ ht.front_left_status.value }}</td><td>{{ ht.front_right_status.value }}</td><td>{{ ht.rear_left_status.value }}</td><td>{{ ht.rear_right_status.value }}</td></tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center text-muted">سابقه‌ای ثبت نشده است</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -207,12 +383,100 @@
     </div>
 </div>
 
-<!-- Modal Partials for Insemination, CIDR, DryOff, Calving, Vaccination, Measurement -->
+<div class="modal fade" id="quarterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white"><h5 class="modal-title">ثبت وضعیت کارتیه</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('other_operations.quarter_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ</label><input type="text" name="date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">موقعیت کارتیه</label><select name="quarter" class="form-select"><option value="front_left">جلو چپ</option><option value="front_right">جلو راست</option><option value="rear_left">عقب چپ</option><option value="rear_right">عقب راست</option></select></div>
+                    <div class="mb-3"><label class="form-label">شرح مشکل / ورم پستان</label><textarea name="issue_description" class="form-control" rows="2"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-info text-white">ثبت کارتیه</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white"><h5 class="modal-title">ثبت واقعه یکبار</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('other_operations.one_time_event_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ</label><input type="text" name="date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">نوع واقعه</label><input type="text" name="event_type" class="form-control" required placeholder="مثلاً شاخ‌سوزی / پلاک‌گذاری"></div>
+                    <div class="mb-3"><label class="form-label">توضیحات</label><textarea name="description" class="form-control" rows="2"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-secondary">ثبت واقعه</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="bsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white"><h5 class="modal-title">ثبت اسکور بدنی (BCS)</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('other_operations.body_score_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ</label><input type="text" name="date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">امتیاز بدنی (۱ تا ۵)</label><input type="number" step="0.25" min="1" max="5" name="score" value="3.0" class="form-control" required></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-success">ثبت اسکور بدنی</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="msModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white"><h5 class="modal-title">ثبت اسکور حرکتی</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('other_operations.movement_score_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ</label><input type="text" name="date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">امتیاز حرکتی (۱ تا ۵)</label><input type="number" step="0.5" min="1" max="5" name="score" value="1.0" class="form-control" required></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-dark">ثبت اسکور حرکتی</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="hoofModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark"><h5 class="modal-title">ثبت سم‌چینی</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('other_operations.hoof_trimming_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ</label><input type="text" name="date" class="form-control pdate" required></div>
+                    <div class="row g-2">
+                        <div class="col-6 mb-2"><label class="form-label">جلو چپ</label><select name="front_left_status" class="form-select"><option value="healthy">سالم</option><option value="long">بلند</option><option value="problem">دارای عارضه</option></select></div>
+                        <div class="col-6 mb-2"><label class="form-label">جلو راست</label><select name="front_right_status" class="form-select"><option value="healthy">سالم</option><option value="long">بلند</option><option value="problem">دارای عارضه</option></select></div>
+                        <div class="col-6 mb-2"><label class="form-label">عقب چپ</label><select name="rear_left_status" class="form-select"><option value="healthy">سالم</option><option value="long">بلند</option><option value="problem">دارای عارضه</option></select></div>
+                        <div class="col-6 mb-2"><label class="form-label">عقب راست</label><select name="rear_right_status" class="form-select"><option value="healthy">سالم</option><option value="long">بلند</option><option value="problem">دارای عارضه</option></select></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-warning">ثبت سم‌چینی</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Partials for Insemination, CIDR, DryOff, Calving, Vaccination, Measurement, Treatment, MedicineNoVisit, Heat -->
 <div class="modal fade" id="insemModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white"><h5 class="modal-title">ثبت تلقیح جدید</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
             <form method="POST" action="{{ url_for('reproduction.insemination_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body">
                     <div class="mb-3"><label class="form-label">تاریخ تلقیح</label><input type="text" name="date" class="form-control pdate" required></div>
                     <div class="mb-3"><label class="form-label">نوع تلقیح</label><select name="insemination_type" class="form-select"><option value="artificial">مصنوعی</option><option value="natural">طبیعی</option></select></div>
@@ -225,21 +489,191 @@
     </div>
 </div>
 
+<div class="modal fade" id="cidrModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white"><h5 class="modal-title">ثبت سیدرگذاری</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('reproduction.cidr_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ ورود سیدر</label><input type="text" name="insert_date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">تاریخ خروج سیدر</label><input type="text" name="remove_date" class="form-control pdate"></div>
+                    <div class="mb-3"><label class="form-label">نوع سیدر</label><input type="text" name="cidr_type" class="form-control" placeholder="مثلاً CIDR-G"></div>
+                    <div class="mb-3"><label class="form-label">توضیحات</label><textarea name="notes" class="form-control" rows="2"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-info text-white">ثبت سیدر</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="dryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark"><h5 class="modal-title">ثبت شروع خشکی</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('reproduction.dry_off_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ شروع خشکی</label><input type="text" name="start_date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">توضیحات</label><textarea name="notes" class="form-control" rows="2"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-warning">ثبت خشکی</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="dryEndModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark"><h5 class="modal-title">ثبت پایان خشکی</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form id="dryEndForm" method="POST" action="" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" id="dryEndId" name="dry_id">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ پایان خشکی</label><input type="text" name="end_date" class="form-control pdate" required></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-warning" onclick="submitDryEnd()">ثبت پایان</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="calvingModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-success text-white"><h5 class="modal-title">ثبت زایش</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
             <form method="POST" action="{{ url_for('reproduction.calving_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body">
                     <div class="mb-3"><label class="form-label">تاریخ زایش</label><input type="text" name="date" class="form-control pdate" required></div>
                     <div class="mb-3"><label class="form-label">نوع زایش</label><select name="calving_type" class="form-select"><option value="normal">طبیعی</option><option value="difficult">سخت‌زایی</option><option value="abortion">سقط جنین</option><option value="stillbirth">مرده‌زایی</option></select></div>
-                    <div class="mb-3"><label class="form-label">تعداد فرزند (بره/بزغاله)</label><input type="number" name="offspring_count" value="1" min="1" max="4" class="form-control"></div>
+                    <div class="mb-3"><label class="form-label">تعداد فرزند (بره/بزغاله)</label><input type="number" name="offspring_count" value="1" min="0" max="5" class="form-control"></div>
                 </div>
                 <div class="modal-footer"><button type="submit" class="btn btn-success">ثبت زایش</button></div>
             </form>
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="vacModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white"><h5 class="modal-title">ثبت واکسیناسیون</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('medical.vaccination_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ تزریق</label><input type="text" name="date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">نام واکسن</label><input type="text" name="vaccine_name" class="form-control" required placeholder="مثلاً انتروتوکسمی"></div>
+                    <div class="mb-3"><label class="form-label">شماره دوز</label><input type="text" name="dose_number" class="form-control" placeholder="مثلاً دوز اول / یادآور"></div>
+                    <div class="mb-3"><label class="form-label">تزریق‌کننده / عامل</label><input type="text" name="agent_name" class="form-control"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-secondary">ثبت واکسن</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="treatmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white"><h5 class="modal-title">ثبت درمان / ویزیت پزشکی</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('medical.treatment_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ ویزیت</label><input type="text" name="date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">نوع ویزیت</label><select name="visit_type" class="form-select"><option value="medical">عمومی / پزشکی</option><option value="reproductive">تولیدمثلی</option></select></div>
+                    <div class="mb-3"><label class="form-label">دامپزشک</label><input type="text" name="doctor" class="form-control"></div>
+                    <div class="mb-3"><label class="form-label">علت مراجعه</label><input type="text" name="visit_reason" class="form-control"></div>
+                    <div class="mb-3"><label class="form-label">تشخیص و درمان</label><textarea name="diagnosis" class="form-control" rows="2"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-danger">ثبت ویزیت</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="trEndModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white"><h5 class="modal-title">ثبت پایان درمان</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form id="trEndForm" method="POST" action="" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" id="trEndId" name="tr_id">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ پایان درمان</label><input type="text" name="treatment_end_date" class="form-control pdate" required></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-danger" onclick="submitTrEnd()">ثبت پایان</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="mnvModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white"><h5 class="modal-title">ثبت مصرف دارو بدون ویزیت</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('medical.medicine_no_visit_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ تجویز</label><input type="text" name="prescribe_date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">نام دارو</label><input type="text" name="medicine_name" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">مقدار دوز</label><input type="number" step="0.1" name="dose_amount" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">واحد دوز</label><input type="text" name="dose_unit" class="form-control" placeholder="مثلاً CC / mg"></div>
+                    <div class="mb-3"><label class="form-label">روش مصرف</label><input type="text" name="consumption_method" class="form-control" placeholder="خوراکی / تزریقی"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-dark">ثبت مصرف دارو</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="heatModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white"><h5 class="modal-title">ثبت فحلی بدون تلقیح</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('reproduction.heat_no_insemination_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ فحلی</label><input type="text" name="date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">علائم فحلی</label><input type="text" name="heat_symptoms" class="form-control"></div>
+                    <div class="mb-3"><label class="form-label">فحلی‌یاب / مشاهده‌کننده</label><input type="text" name="heat_detector" class="form-control"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">ثبت فحلی</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="measModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white"><h5 class="modal-title">ثبت وزن / اندازه‌گیری</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('other_operations.measurement_new', animal_id=animal.id) }}" data-ajax="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">تاریخ</label><input type="text" name="date" class="form-control pdate" required></div>
+                    <div class="mb-3"><label class="form-label">نوع اندازه‌گیری</label><select name="measurement_type" class="form-select"><option value="weight">وزن کشی</option><option value="body_temperature">دمای بدن</option><option value="body_length">طول بدن</option><option value="chest_girth">دور سینه</option><option value="withers_height">ارتفاع جدگاه</option></select></div>
+                    <div class="mb-3"><label class="form-label">مقدار</label><input type="number" step="0.1" name="value" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">واحد</label><input type="text" name="unit" value="کیلوگرم" class="form-control"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">ثبت اندازه‌گیری</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function submitDryEnd() {
+    var id = $('#dryEndId').val();
+    $('#dryEndForm').attr('action', '/reproduction/dry-off/' + id + '/end').submit();
+}
+
+function submitTrEnd() {
+    var id = $('#trEndId').val();
+    $('#trEndForm').attr('action', '/medical/treatment/' + id + '/end').submit();
+}
+</script>
 
 <script>
 function switchTab(tabName) {
