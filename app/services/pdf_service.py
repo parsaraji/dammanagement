@@ -1,6 +1,7 @@
 import io
 import os
 import base64
+from pathlib import Path
 import qrcode
 import arabic_reshaper
 from bidi.algorithm import get_display
@@ -8,6 +9,7 @@ from xhtml2pdf import pisa
 from app.services.jalali import to_jalali
 
 FONT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static', 'fonts', 'vazirmatn', 'Vazirmatn-Regular.ttf'))
+FONT_URI = Path(FONT_PATH).as_uri()
 
 def fa_pdf(text) -> str:
     if text is None:
@@ -56,7 +58,7 @@ def generate_animal_id_card(animal):
         <style>
             @font-face {{
                 font-family: 'Vazirmatn';
-                src: url('{FONT_PATH}');
+                src: url('{FONT_URI}');
             }}
             @page {{
                 size: A6 landscape;
