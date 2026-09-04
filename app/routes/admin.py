@@ -10,6 +10,7 @@ bp = Blueprint('admin', __name__)
 
 @bp.route('/admin/defaults', methods=['GET', 'POST'])
 @login_required
+@roles_required('admin')
 def defaults():
     form = LookupItemForm()
     if form.validate_on_submit():
@@ -28,6 +29,7 @@ def defaults():
 
 @bp.route('/admin/defaults/<int:id>/delete', methods=['POST'])
 @login_required
+@roles_required('admin')
 def delete_lookup(id):
     item = LookupItem.query.get_or_404(id)
     db.session.delete(item)
@@ -37,6 +39,7 @@ def delete_lookup(id):
 
 @bp.route('/admin/program-settings', methods=['GET', 'POST'])
 @login_required
+@roles_required('admin')
 def program_settings():
     form = ProgramSettingsForm()
     if request.method == 'GET':
@@ -66,6 +69,7 @@ def program_settings():
 
 @bp.route('/admin/staff', methods=['GET', 'POST'])
 @login_required
+@roles_required('admin')
 def staff():
     form = StaffForm()
     if form.validate_on_submit():
@@ -114,6 +118,7 @@ def support():
 
 @bp.route('/admin/server-connection', methods=['GET', 'POST'])
 @login_required
+@roles_required('admin')
 def server_connection():
     if request.method == 'POST':
         flash('تنظیمات اتصال به سرور مرکزی ذخیره شد.', 'success')

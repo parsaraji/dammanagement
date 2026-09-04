@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.extensions import db
-from app.models.animal import Animal, AnimalStatus, Sex, Species, Origin
+from app.models.animal import Animal
 from app.models.reproduction import (
     CIDR, Insemination, HeatNoInsemination, DryOff, Calving, CalvingOffspring,
     InseminationType, CalvingType
@@ -15,10 +15,13 @@ bp = Blueprint('reproduction', __name__)
 def insemination_new(animal_id):
     animal = Animal.query.get_or_404(animal_id)
     raw_date = request.form.get('date')
-    d = from_jalali(raw_date) if raw_date else None
+    try:
+        d = from_jalali(raw_date) if raw_date else None
+    except ValueError as e:
+        return jsonify({'success': False, 'message': f'تاریخ وارد شده شمسی نامعتبر است: {str(e)}'})
 
     if not d:
-        return jsonify({'success': False, 'message': 'تاریخ تلقیح نامعتبر است.'})
+        return jsonify({'success': False, 'message': 'لطفاً تاریخ تلقیح را وارد کنید.'})
 
     insem_type = request.form.get('insemination_type', 'artificial')
     sperm_id = int(request.form.get('sperm_id')) if request.form.get('sperm_id') else None
@@ -43,8 +46,14 @@ def insemination_new(animal_id):
 @login_required
 def cidr_new(animal_id):
     animal = Animal.query.get_or_404(animal_id)
-    ins_date = from_jalali(request.form.get('insert_date'))
-    rem_date = from_jalali(request.form.get('remove_date')) if request.form.get('remove_date') else None
+    try:
+        ins_date = from_jalali(request.form.get('insert_date'))
+        rem_date = from_jalali(request.form.get('remove_date')) if request.form.get('remove_date') else None
+    except ValueError as e:
+        return jsonify({'success': False, 'message': f'تاریخ وارد شده شمسی نامعتبر است: {str(e)}'})
+
+    if not ins_date:
+        return jsonify({'success': False, 'message': 'لطفاً تاریخ سیدرگذاری را وارد کنید.'})
 
     cidr = CIDR(
         animal_id=animal.id,
@@ -62,7 +71,13 @@ def cidr_new(animal_id):
 @login_required
 def dry_off_new(animal_id):
     animal = Animal.query.get_or_404(animal_id)
-    start_d = from_jalali(request.form.get('start_date'))
+    try:
+        start_d = from_jalali(request.form.get('start_date'))
+    except ValueError as e:
+        return jsonify({'success': False, 'message': f'تاریخ وارد شده شمسی نامعتبر است: {str(e)}'})
+
+    if not start_d:
+        return jsonify({'success': False, 'message': 'لطفاً تاریخ شروع خشکی را وارد کنید.'})
 
     dry = DryOff(
         animal_id=animal.id,
@@ -78,7 +93,14 @@ def dry_off_new(animal_id):
 @login_required
 def calving_new(animal_id):
     animal = Animal.query.get_or_404(animal_id)
-    calv_date = from_jalali(request.form.get('date'))
+    try:
+        calv_date = from_jalali(request.form.get('date'))
+    except ValueError as e:
+        return jsonify({'success': False, 'message': f'تاریخ وارد شده شمسی نامعتبر است: {str(e)}'})
+
+    if not calv_date:
+        return jsonify({'success': False, 'message': 'لطفاً تاریخ زایش را وارد کنید.'})
+
     calv_type_str = request.form.get('calving_type', 'normal')
     offspring_cnt = int(request.form.get('offspring_count', 1))
 
