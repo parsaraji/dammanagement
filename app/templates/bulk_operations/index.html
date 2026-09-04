@@ -126,18 +126,23 @@
                             <tr>
                                 <td>
                                     <strong>{{ a.plastic_tag }}</strong>
-                                    <input type="hidden" name="animal_id[]" value="{{ a.id }}">
+                                    <input type="hidden" name="batch_animal_id[]" value="{{ a.id }}">
                                 </td>
                                 <td>
-                                    <select name="action[]" class="form-select form-select-sm">
+                                    <select name="batch_op_type[]" class="form-select form-select-sm">
                                         <option value="none">بدون اقدام</option>
-                                        <option value="vaccine">واکسن انتروتوکسمی</option>
+                                        <option value="vaccine">واکسن</option>
                                         <option value="weight">ثبت وزن</option>
                                         <option value="hoof">سم‌چینی</option>
+                                        <option value="cidr">سیدرگذاری</option>
+                                        <option value="dry_off">خشکی</option>
                                     </select>
                                 </td>
-                                <td><input type="text" name="date[]" class="form-control form-control-sm pdate"></td>
-                                <td><input type="text" name="val[]" class="form-control form-control-sm" placeholder="مقدار/توضیح"></td>
+                                <td><input type="text" name="batch_date[]" class="form-control form-control-sm pdate"></td>
+                                <td>
+                                    <input type="text" name="batch_p1[]" class="form-control form-control-sm" placeholder="پارامتر اول (نام واکسن/وزن/توضیح)">
+                                    <input type="hidden" name="batch_p2[]" value="">
+                                </td>
                             </tr>
                             {% else %}
                             <tr><td colspan="4" class="text-center text-muted">دام برای نمایش در جدول بچ وجود ندارد.</td></tr>
