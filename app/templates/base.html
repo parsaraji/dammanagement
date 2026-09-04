@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}سامانه مدیریت دام سبک (گوسفند و بز){% endblock %}</title>
 
     <!-- Bootstrap 5 RTL -->
@@ -126,6 +127,37 @@
                 {% endwith %}
 
                 {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Toast Container for App-Wide Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+        <div id="appToast" class="toast align-items-center text-white border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body fs-7" id="appToastBody">
+                    پیام سامانه
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Modal for Confirmation Dialogs -->
+    <div class="modal fade" id="appConfirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark py-2">
+                    <h6 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i> تایید عملیات</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body fs-7 text-center py-3" id="appConfirmBody">
+                    آیا از انجام این عملیات اطمینان دارید؟
+                </div>
+                <div class="modal-footer justify-content-center p-2">
+                    <button type="button" class="btn btn-sm btn-secondary px-3" data-bs-dismiss="modal">انصراف</button>
+                    <button type="button" class="btn btn-sm btn-danger px-3" id="appConfirmBtn">بله، انجام شود</button>
+                </div>
             </div>
         </div>
     </div>

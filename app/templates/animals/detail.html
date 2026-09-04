@@ -710,19 +710,63 @@ function switchTab(tabName) {
 }
 
 window.triggerNewbornModal = function(data) {
-    if ($('#addAnimalModal').length) {
-        $('#addAnimalModal input[name="mother_id"]').val(data.mother_id);
-        $('#addAnimalModal select[name="species"]').val(data.species);
-        $('#addAnimalModal input[name="birth_date"]').val(data.birth_date);
-        if (data.suggested_tag) $('#addAnimalModal input[name="plastic_tag"]').val(data.suggested_tag);
-        if (data.suggested_serial) $('#addAnimalModal input[name="serial_number"]').val(data.suggested_serial);
-        if (data.current_pen_id) $('#addAnimalModal select[name="current_pen_id"]').val(data.current_pen_id);
-        if (data.calving_id) $('#addAnimalModal input[name="calving_id"]').val(data.calving_id);
-        $('#addAnimalModal').modal('show');
-    } else {
-        alert('زایش با موفقیت ثبت شد. متولدین جدید در لیست اصلی دام‌ها قابل مشاهده خواهند بود.');
-        window.location.reload();
-    }
+    var modalHtml = `
+    <div class="modal fade" id="autoNewbornModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">ثبت مشخصات بره/بزغاله متولد شده</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="/animals/new" data-ajax="true">
+                    <input type="hidden" name="csrf_token" value="${$('meta[name="csrf-token"]').attr('content')}">
+                    <input type="hidden" name="mother_id" value="${data.mother_id}">
+                    <input type="hidden" name="calving_id" value="${data.calving_id}">
+                    <input type="hidden" name="origin" value="born_in_farm">
+                    <div class="modal-body">
+                        <div class="alert alert-info py-2 fs-7">
+                            <i class="fa-solid fa-circle-info me-1"></i> اطلاعات اولیه به صورت خودکار پیشنهاد شده است و قابل ویرایش است.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">شماره پلاستیکی (پیشنهادی)</label>
+                            <input type="text" name="plastic_tag" value="${data.suggested_tag}" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">شماره سریال (پیشنهادی)</label>
+                            <input type="text" name="serial_number" value="${data.suggested_serial}" class="form-control" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label">گونه</label>
+                                <select name="species" class="form-select">
+                                    <option value="${data.species}" selected>${data.species === 'sheep' ? 'گوسفند' : 'بز'}</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">جنسیت</label>
+                                <select name="sex" class="form-select">
+                                    <option value="female">ماده</option>
+                                    <option value="male">نر</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">تاریخ تولد</label>
+                            <input type="text" name="birth_date" value="${data.birth_date}" class="form-control pdate" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">ثبت فرزند جدید</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>`;
+
+    $('#autoNewbornModal').remove();
+    $('body').append(modalHtml);
+    var newModal = new bootstrap.Modal(document.getElementById('autoNewbornModal'));
+    newModal.show();
 };
 </script>
 {% endblock %}

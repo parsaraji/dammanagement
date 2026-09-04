@@ -30,6 +30,7 @@
             <!-- Tab 1: Selection -->
             <div class="tab-pane fade show active" id="tab1">
                 <form method="POST" action="{{ url_for('bulk_operations.select_animals') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="row g-3 mb-3">
                         <div class="col-md-3">
                             <label class="form-label">بهاربند</label>
@@ -84,6 +85,7 @@
             <!-- Tab 2: Quick Uniform Operation -->
             <div class="tab-pane fade" id="tab2">
                 <form method="POST" action="{{ url_for('bulk_operations.quick_apply') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">نوع عملیات سریع</label>
@@ -114,6 +116,7 @@
             <div class="tab-pane fade" id="tab3">
                 <p class="fs-7 text-muted">در این قسمت می‌توانید برای هر دام عملیات دلخواه را ثبت کنید. کلیه ثبت‌ها در قالب یک تراکنش یکپارچه انجام شده و در صورت هرگونه خطا کل تراکنش رول‌بک خواهد شد.</p>
                 <form method="POST" action="{{ url_for('bulk_operations.batch_submit') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <table class="table table-bordered table-sm align-middle">
                         <thead class="table-light">
                             <tr><th>شماره دام</th><th>عملیات مورد نظر</th><th>تاریخ</th><th>جزئیات/مقدار</th></tr>
