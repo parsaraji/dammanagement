@@ -15,6 +15,8 @@ def create_app(config_class=Config):
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
+    from app.extensions import csrf
+    csrf.init_app(app)
 
     # User loader
     from app.models.user import User
@@ -92,7 +94,9 @@ def create_app(config_class=Config):
         db.create_all()
         from app.models.animal import Animal
         try:
-            if Animal.query.count() == 0:
+            env = os.environ.get('FLASK_ENV', 'development')
+            force_seed = os.environ.get('SEED_DEMO', '0') in ['1', 'true', 'True']
+            if Animal.query.count() == 0 and (env == 'development' or force_seed):
                 print("Database is empty or missing data. Running seed_demo.seed()...")
                 from seed_demo import seed
                 seed()

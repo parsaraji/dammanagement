@@ -47,31 +47,49 @@ def new():
 @bp.route('/medicine-warehouse/<int:id>/transaction', methods=['POST'])
 @login_required
 def transaction(id):
-    med = Medicine.query.get_or_404(id)
-    tx_type_str = request.form.get('transaction_type', 'in')
-    raw_date = request.form.get('date')
-    d = from_jalali(raw_date) if raw_date else None
-    qty = float(request.form.get('quantity', 0))
+    try:
+        med = db.session.get(Medicine, id)
+        if not med:
+            flash('داروی مورد نظر یافت نشد.', 'danger')
+            return redirect(url_for('medicine_warehouse.list'))
 
-    if not d or qty <= 0:
-        flash('اطلاعات تراکنش دارویی نامعتبر است.', 'danger')
-        return redirect(url_for('medicine_warehouse.list'))
+        tx_type_str = request.form.get('transaction_type', 'in')
+        raw_date = request.form.get('date')
+        try:
+            d = from_jalali(raw_date) if raw_date else None
+        except ValueError:
+            flash('تاریخ شمسی وارد شده نامعتبر است.', 'danger')
+            return redirect(url_for('medicine_warehouse.list'))
 
-    tx_type = StockTransactionType.IN if tx_type_str == 'in' else StockTransactionType.OUT
+        try:
+            qty = float(request.form.get('quantity', 0))
+        except (ValueError, TypeError):
+            qty = 0.0
 
-    if tx_type == StockTransactionType.OUT and med.current_stock < qty:
-        flash('موجودی انبار دارو برای این میزان خروج کافی نیست.', 'danger')
-        return redirect(url_for('medicine_warehouse.list'))
+        if not d or qty <= 0:
+            flash('اطلاعات تراکنش دارویی نامعتبر است.', 'danger')
+            return redirect(url_for('medicine_warehouse.list'))
 
-    st = MedicineStock(
-        medicine_id=med.id,
-        date=d,
-        transaction_type=tx_type,
-        quantity=qty,
-        supplier=request.form.get('supplier'),
-        created_by_user_id=current_user.id
-    )
-    db.session.add(st)
-    db.session.commit()
-    flash('تراکنش دارویی ثبت شد.', 'success')
+        tx_type = StockTransactionType.IN if tx_type_str == 'in' else StockTransactionType.OUT
+
+        # Perform atomic stock validation
+        if tx_type == StockTransactionType.OUT and med.current_stock < qty:
+            flash('موجودی انبار دارو برای این میزان خروج کافی نیست.', 'danger')
+            return redirect(url_for('medicine_warehouse.list'))
+
+        st = MedicineStock(
+            medicine_id=med.id,
+            date=d,
+            transaction_type=tx_type,
+            quantity=qty,
+            supplier=request.form.get('supplier'),
+            created_by_user_id=current_user.id
+        )
+        db.session.add(st)
+        db.session.commit()
+        flash('تراکنش دارویی با موفقیت ثبت شد.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'خطا در ثبت تراکنش دارویی: {str(e)}', 'danger')
+
     return redirect(url_for('medicine_warehouse.list'))

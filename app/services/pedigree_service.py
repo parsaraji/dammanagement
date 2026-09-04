@@ -1,46 +1,49 @@
+from app.extensions import db
 from app.models.animal import Animal
 
-def get_ancestors_with_depth(animal_id, max_depth=6, current_depth=0):
+def get_ancestors_with_paths(animal_id, max_depth=6, current_depth=0, visited=None):
     """
-    Returns a dict mapping ancestor_id -> list of paths from animal to ancestor.
-    A path is a tuple of (depth, parent_type) e.g., (1, 'father'), (2, 'mother').
+    Returns dict mapping ancestor_id -> list of path depths from specified animal.
+    Prevents infinite cycles via visited set.
     """
-    if not animal_id or current_depth >= max_depth:
+    if visited is None:
+        visited = set()
+
+    if not animal_id or current_depth >= max_depth or animal_id in visited:
         return {}
 
-    animal = Animal.query.get(animal_id)
+    visited.add(animal_id)
+    animal = db.session.get(Animal, animal_id)
     if not animal:
+        visited.remove(animal_id)
         return {}
 
     ancestors = {}
-
-    # Get father (either direct animal or via father_sperm)
     sire_id = animal.father_id
     dam_id = animal.mother_id
 
-    for parent_id, p_type in [(sire_id, 'sire'), (dam_id, 'dam')]:
+    for parent_id in [sire_id, dam_id]:
         if parent_id:
             if parent_id not in ancestors:
                 ancestors[parent_id] = []
-            ancestors[parent_id].append((current_depth + 1, p_type))
+            ancestors[parent_id].append(current_depth + 1)
 
-            # Recurse
-            sub_ancestors = get_ancestors_with_depth(parent_id, max_depth, current_depth + 1)
-            for anc_id, paths in sub_ancestors.items():
+            sub_ancestors = get_ancestors_with_paths(parent_id, max_depth, current_depth + 1, set(visited))
+            for anc_id, depths in sub_ancestors.items():
                 if anc_id not in ancestors:
                     ancestors[anc_id] = []
-                ancestors[anc_id].extend(paths)
+                ancestors[anc_id].extend(depths)
 
+    visited.remove(animal_id)
     return ancestors
 
-def calculate_inbreeding_coefficient(sire_id_or_animal1, dam_id_or_animal2=None):
+def calculate_inbreeding_coefficient(sire_id_or_animal1, dam_id_or_animal2=None, max_depth=6):
     """
-    Calculates Wright's inbreeding coefficient F.
-    If animal2 is provided, calculates F for hypothetical offspring of (animal1, animal2).
-    If animal2 is None, calculates F for animal1 based on its parents.
+    Calculates Wright's inbreeding coefficient F using recursive ancestor evaluation.
+    Handles ancestor inbreeding F_A.
     """
     if dam_id_or_animal2 is None:
-        animal = sire_id_or_animal1 if isinstance(sire_id_or_animal1, Animal) else Animal.query.get(sire_id_or_animal1)
+        animal = sire_id_or_animal1 if isinstance(sire_id_or_animal1, Animal) else db.session.get(Animal, sire_id_or_animal1)
         if not animal or not animal.father_id or not animal.mother_id:
             return 0.0
         sire_id = animal.father_id
@@ -53,42 +56,48 @@ def calculate_inbreeding_coefficient(sire_id_or_animal1, dam_id_or_animal2=None)
         return 0.0
 
     if sire_id == dam_id:
-        # Selfing / identical parent
         return 0.5
 
-    sire_ancestors = get_ancestors_with_depth(sire_id, max_depth=6)
-    dam_ancestors = get_ancestors_with_depth(dam_id, max_depth=6)
+    sire_ancestors = get_ancestors_with_paths(sire_id, max_depth=max_depth)
+    dam_ancestors = get_ancestors_with_paths(dam_id, max_depth=max_depth)
 
-    # Add self to ancestors map at depth 0
-    sire_ancestors[sire_id] = [(0, 'self')] + sire_ancestors.get(sire_id, [])
-    dam_ancestors[dam_id] = [(0, 'self')] + dam_ancestors.get(dam_id, [])
+    # Self as depth 0 ancestor
+    sire_ancestors[sire_id] = [0] + sire_ancestors.get(sire_id, [])
+    dam_ancestors[dam_id] = [0] + dam_ancestors.get(dam_id, [])
 
     common_ancestors = set(sire_ancestors.keys()).intersection(set(dam_ancestors.keys()))
-
     if not common_ancestors:
         return 0.0
 
     total_f = 0.0
     for anc_id in common_ancestors:
-        # Calculate F_A for ancestor A recursively (to depth 3 to avoid infinite recursion)
-        f_a = 0.0 # Default for founders or simple depth
+        # Calculate ancestor's own inbreeding coefficient F_A if ancestor has parents
+        f_a = 0.0
+        anc_obj = db.session.get(Animal, anc_id)
+        if anc_obj and anc_obj.father_id and anc_obj.mother_id and max_depth > 2:
+            f_a = calculate_inbreeding_coefficient(anc_obj.father_id, anc_obj.mother_id, max_depth=max_depth-2)
 
-        for d_s, _ in sire_ancestors[anc_id]:
-            for d_d, _ in dam_ancestors[anc_id]:
-                # n1 = d_s, n2 = d_d
+        for d_s in sire_ancestors[anc_id]:
+            for d_d in dam_ancestors[anc_id]:
                 total_f += (0.5 ** (d_s + d_d + 1)) * (1.0 + f_a)
 
     return round(total_f, 4)
 
-def calculate_blood_purity(animal):
-    """Calculates estimated blood purity percentage based on known purebred ancestors."""
-    if not animal:
-        return 100.0
-    if not animal.mother_id and not animal.father_id:
-        return 100.0 # Assumed pure founder if no recorded parents
+def calculate_blood_purity(animal, visited=None):
+    """Calculates estimated blood purity percentage safely against cycles and missing data."""
+    if visited is None:
+        visited = set()
 
-    mother_purity = calculate_blood_purity(animal.mother) if animal.mother else 100.0
-    father_purity = calculate_blood_purity(animal.father) if animal.father else 100.0
+    if not animal or animal.id in visited:
+        return 100.0
+
+    visited.add(animal.id)
+
+    if not animal.mother_id and not animal.father_id:
+        return 100.0
+
+    mother_purity = calculate_blood_purity(animal.mother, set(visited)) if animal.mother else 100.0
+    father_purity = calculate_blood_purity(animal.father, set(visited)) if animal.father else 100.0
 
     return round((mother_purity + father_purity) / 2.0, 2)
 

@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app.models.user import User
@@ -6,6 +7,13 @@ from app.services.jalali import to_jalali
 from datetime import datetime
 
 bp = Blueprint('auth', __name__)
+
+def is_safe_url(target):
+    if not target:
+        return False
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(target)
+    return (test_url.scheme in ('', 'http', 'https') and ref_url.netloc == test_url.netloc) or not test_url.netloc
 
 @bp.context_processor
 def inject_context():
@@ -25,7 +33,9 @@ def login():
                 return redirect(url_for('auth.login'))
             login_user(user)
             next_page = request.args.get('next')
-            return redirect(next_page or url_for('dashboard.index'))
+            if not next_page or not is_safe_url(next_page):
+                next_page = url_for('dashboard.index')
+            return redirect(next_page)
         else:
             flash('نام کاربری یا رمز عبور اشتباه است.', 'danger')
 

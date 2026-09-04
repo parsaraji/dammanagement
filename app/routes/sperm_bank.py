@@ -47,37 +47,55 @@ def new():
 @bp.route('/sperm-bank/<int:id>/transaction', methods=['POST'])
 @login_required
 def transaction(id):
-    sperm = Sperm.query.get_or_404(id)
-    tx_type_str = request.form.get('transaction_type', 'in')
-    raw_date = request.form.get('date')
-    d = from_jalali(raw_date) if raw_date else None
-    qty = int(request.form.get('quantity', 0))
+    try:
+        sperm = db.session.get(Sperm, id)
+        if not sperm:
+            flash('اسپرم یافت نشد.', 'danger')
+            return redirect(url_for('sperm_bank.list'))
 
-    if not d or qty <= 0:
-        flash('اطلاعات تراکنش نامعتبر است.', 'danger')
-        return redirect(url_for('sperm_bank.list'))
+        tx_type_str = request.form.get('transaction_type', 'in')
+        raw_date = request.form.get('date')
+        try:
+            d = from_jalali(raw_date) if raw_date else None
+        except ValueError:
+            flash('تاریخ شمسی وارد شده نامعتبر است.', 'danger')
+            return redirect(url_for('sperm_bank.list'))
 
-    tx_type = StockTransactionType.IN if tx_type_str == 'in' else StockTransactionType.OUT
+        try:
+            qty = int(request.form.get('quantity', 0))
+        except (ValueError, TypeError):
+            qty = 0
 
-    if tx_type == StockTransactionType.OUT and sperm.stock_qty < qty:
-        flash('موجودی اسپرم برای این میزان خروج کافی نیست.', 'danger')
-        return redirect(url_for('sperm_bank.list'))
+        if not d or qty <= 0:
+            flash('اطلاعات تراکنش یا مقدار وارد شده نامعتبر است.', 'danger')
+            return redirect(url_for('sperm_bank.list'))
 
-    tx = SpermTransaction(
-        sperm_id=sperm.id,
-        transaction_type=tx_type,
-        date=d,
-        quantity=qty,
-        description=request.form.get('description'),
-        created_by_user_id=current_user.id
-    )
+        tx_type = StockTransactionType.IN if tx_type_str == 'in' else StockTransactionType.OUT
 
-    if tx_type == StockTransactionType.IN:
-        sperm.stock_qty += qty
-    else:
-        sperm.stock_qty -= qty
+        # Perform atomic inventory check
+        if tx_type == StockTransactionType.OUT and sperm.stock_qty < qty:
+            flash('موجودی اسپرم برای این میزان خروج کافی نیست.', 'danger')
+            return redirect(url_for('sperm_bank.list'))
 
-    db.session.add(tx)
-    db.session.commit()
-    flash('تراکنش با موفقیت ثبت شد و موجودی بروزرسانی گردید.', 'success')
+        tx = SpermTransaction(
+            sperm_id=sperm.id,
+            transaction_type=tx_type,
+            date=d,
+            quantity=qty,
+            description=request.form.get('description'),
+            created_by_user_id=current_user.id
+        )
+
+        if tx_type == StockTransactionType.IN:
+            sperm.stock_qty += qty
+        else:
+            sperm.stock_qty -= qty
+
+        db.session.add(tx)
+        db.session.commit()
+        flash('تراکنش با موفقیت ثبت شد و موجودی بروزرسانی گردید.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'خطا در ثبت تراکنش اسپرم: {str(e)}', 'danger')
+
     return redirect(url_for('sperm_bank.list'))
