@@ -10,6 +10,7 @@
             <i class="fa-solid fa-circle-info me-2"></i> این بخش جهت پیکربندی همگام‌سازی اطلاعات با سرور مرکزی دامپروری طراحی شده است.
         </div>
         <form method="POST" action="{{ url_for('admin.server_connection') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-3">
                 <label class="form-label">آدرس سرور مرکزی (URL)</label>
                 <input type="url" name="server_url" class="form-control" value="https://sync.livestock-manager.ir/api/v1">

@@ -38,3 +38,23 @@ def test_gaines_4pct_fcm_formula():
     # 10 kg milk with 5.0% fat -> FCM = 4 + (15 * 0.5) = 11.5 kg
     fcm_high_fat = calculate_4pct_fcm(10.0, 5.0)
     assert fcm_high_fat == 11.5
+
+def test_milk_bulk_submit_route(client, app):
+    with app.app_context():
+        # Login
+        with client.session_transaction() as sess:
+            sess['_user_id'] = '1'
+
+        female = Animal.query.filter_by(plastic_tag='IR-G1-F2').first()
+        res = client.post('/milk-bulk/submit', data={
+            'date': '1402/08/15',
+            'record_type': 'official',
+            'animal_id[]': [str(female.id)],
+            'm1[]': ['2.5'],
+            'm2[]': ['2.0'],
+            'm3[]': ['0.0']
+        }, follow_redirects=True)
+
+        assert res.status_code == 200
+        assert b'Bad Request' not in res.data
+        assert b'CSRF token is missing' not in res.data

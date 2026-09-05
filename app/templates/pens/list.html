@@ -28,6 +28,7 @@
                                 <td>{{ p.notes or '---' }}</td>
                                 <td>
                                     <form method="POST" action="{{ url_for('pens.delete', id=p.id) }}" class="d-inline" onsubmit="return confirm('آیا از حذف این بهاربند مطمئن هستید؟');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
                                     </form>
                                 </td>

@@ -7,6 +7,7 @@
     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
         <h5 class="m-0 fw-bold"><i class="fa-solid fa-chart-pie text-primary me-2"></i> ترکیب و آمار ساختار گله</h5>
         <form method="POST" action="{{ url_for('herd_composition.recalculate') }}" class="d-flex align-items-center">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="text" name="date" class="form-control form-control-sm pdate me-2" value="{{ current_date_jalali }}" required style="width: 140px;">
             <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-calculator me-1"></i> محاسبه مجدد امروز</button>
         </form>
