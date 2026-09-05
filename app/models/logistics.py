@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
 
 class PenMovement(db.Model):
@@ -12,7 +12,7 @@ class PenMovement(db.Model):
     reason = db.Column(db.String(255), nullable=True)
 
     created_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     animal = db.relationship('Animal', backref=db.backref('pen_movements', cascade='all, delete-orphan', lazy='dynamic'))
     from_pen = db.relationship('Pen', foreign_keys=[from_pen_id])

@@ -1,3 +1,4 @@
+from app.extensions import db
 from app.models.animal import Animal, AnimalStatus
 
 def test_create_animal(auth_client):
@@ -31,6 +32,6 @@ def test_soft_delete_removal(auth_client):
     assert res.status_code == 200
 
     # Verify soft delete
-    updated_animal = Animal.query.get(animal.id)
+    updated_animal = db.session.get(Animal, animal.id)
     assert updated_animal.status == AnimalStatus.REMOVED
     assert updated_animal.removal_reason == 'فروش پروار'

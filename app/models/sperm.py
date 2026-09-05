@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
 
 class StockTransactionType(enum.Enum):
@@ -35,4 +35,4 @@ class SpermTransaction(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
 
     created_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)

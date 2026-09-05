@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
 
 class InseminationType(enum.Enum):
@@ -24,7 +24,7 @@ class CIDR(db.Model):
     notes = db.Column(db.Text, nullable=True)
 
     created_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     animal = db.relationship('Animal', backref=db.backref('cidrs', cascade='all, delete-orphan', lazy='dynamic'))
 
